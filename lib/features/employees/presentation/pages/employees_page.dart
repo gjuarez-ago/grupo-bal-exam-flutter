@@ -19,20 +19,13 @@ class EmployeesPage extends StatelessWidget {
   final DateTime? today;
 
   static const emptyMessage = 'Todavía no hay empleados registrados.';
+  static const emptyHint = 'Pulsa «Nuevo empleado» para registrar al primero.';
   static const loadErrorTitle = 'No se pudieron cargar los empleados.';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => EmployeeFormPage(today: today),
-          ),
-        ),
-        icon: const Icon(Icons.person_add_alt_1_outlined),
-        label: const Text('Nuevo empleado'),
-      ),
+      floatingActionButton: _NewEmployeeButton(today: today),
       body: SafeArea(
         child: BlocConsumer<EmployeeCubit, EmployeeState>(
           // Con datos en pantalla, un fallo (por ejemplo, al cambiar un
@@ -89,8 +82,47 @@ class EmployeesPage extends StatelessWidget {
       EmployeeStatus.success => const _MessageView(
         icon: Icons.groups_outlined,
         title: emptyMessage,
+        message: emptyHint,
       ),
     };
+  }
+}
+
+/// Botón que abre el formulario de registro.
+///
+/// Ignora pulsaciones mientras el formulario está abierto para no apilar
+/// formularios duplicados. El formulario usa el mismo [EmployeeCubit] del
+/// árbol, por lo que no recibe el Cubit ni devuelve datos al cerrarse.
+class _NewEmployeeButton extends StatefulWidget {
+  const _NewEmployeeButton({required this.today});
+
+  final DateTime? today;
+
+  @override
+  State<_NewEmployeeButton> createState() => _NewEmployeeButtonState();
+}
+
+class _NewEmployeeButtonState extends State<_NewEmployeeButton> {
+  bool _isFormOpen = false;
+
+  Future<void> _openForm() async {
+    if (_isFormOpen) return;
+    _isFormOpen = true;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => EmployeeFormPage(today: widget.today),
+      ),
+    );
+    if (mounted) _isFormOpen = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton.extended(
+      onPressed: _openForm,
+      icon: const Icon(Icons.person_add_alt_1_outlined),
+      label: const Text('Nuevo empleado'),
+    );
   }
 }
 
