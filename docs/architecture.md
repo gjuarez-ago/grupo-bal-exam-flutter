@@ -1,6 +1,6 @@
 # Arquitectura
 
-> **Estado:** Fase 3 (capa de datos). El flujo completo de empleados (consultar, registrar y cambiar el estado) funciona con datos ficticios en memoria a través del repositorio y del Cubit. Todavía **no** existen el listado definitivo ni el formulario de registro: la pantalla actual es provisional y solo muestra cuántos empleados se cargaron.
+> **Estado:** Fase 4 (listado de empleados). La pantalla `EmployeesPage` muestra la lista, los totales y permite activar o desactivar empleados a través del Cubit, con datos ficticios en memoria. Todavía **no** existe el formulario de registro: `registerEmployee` está disponible en el Cubit pero ninguna pantalla lo usa.
 
 ## Enfoque
 
@@ -9,7 +9,7 @@ El proyecto sigue Clean Architecture organizada por funcionalidades (*features*)
 ## Flujo
 
 ```text
-Presentación (pantalla provisional)
+EmployeesPage (EmployeeListSummary, EmployeeCard, EmployeeStatusControl)
     |
     v
 EmployeeCubit
@@ -108,6 +108,7 @@ Es una única clase inmutable con:
 - `status`: `initial`, `loading`, `success` o `failure`.
 - `employees`: lista no modificable.
 - `errorMessage`: solo tiene valor cuando `status` es `failure`.
+- `totalCount`, `activeCount` e `inactiveCount`: totales **derivados** de `employees`. No se almacenan por separado, así que no pueden quedar desincronizados de la lista.
 
 ### `EmployeeCubit`
 
@@ -128,6 +129,37 @@ En caso de fallo:
 - Cualquier otro error se reporta con `addError` y se muestra un mensaje genérico.
 - Un fallo nunca se presenta como éxito.
 
+### Pantalla `EmployeesPage`
+
+`lib/features/employees/presentation/pages/employees_page.dart`
+
+Toma el `EmployeeCubit` del árbol con `BlocConsumer` y no crea instancias propias. La carga inicial no se repite al reconstruir: la dispara `app.dart` al crear el Cubit.
+
+La vista se decide así:
+
+| Situación | Vista |
+|---|---|
+| Hay empleados en la lista | Resumen de totales y tarjetas (`ListView.separated`) |
+| Lista vacía e `initial` / `loading` | Indicador de progreso |
+| Lista vacía y `success` | «Todavía no hay empleados registrados.» |
+| Lista vacía y `failure` | «No se pudieron cargar los empleados.», el mensaje y «Reintentar» (`loadEmployees`) |
+
+Comportamiento con datos en pantalla:
+
+- **Fallo de una operación** (por ejemplo, al cambiar un estado): se informa con un `SnackBar` y la lista sigue mostrando el estado real del Cubit.
+- **Operación en curso** (`status == loading`): los interruptores se deshabilitan para evitar cambios simultáneos.
+
+Widgets de apoyo, en `presentation/widgets/`:
+
+- `EmployeeCard`:
+  - muestra nombre (elemento principal), puesto, área, género y fecha de ingreso (`dd/MM/yyyy`);
+  - muestra el estado con icono **y** texto («Activo» / «Inactivo»), no solo con color;
+  - incluye el interruptor.
+- `EmployeeStatusControl`: un `Switch` sin estado propio; su valor siempre proviene de `employee.isActive`.
+- `EmployeeListSummary`: muestra los totales que recibe del estado.
+
+La fecha se formatea con `formatDate` (`lib/core/utils/date_formatter.dart`), en Dart puro, sin agregar `intl`. La entidad conserva el `DateTime` original.
+
 ## Inyección de dependencias
 
 Es manual y no usa ningún contenedor externo, porque solo hay una dependencia:
@@ -146,14 +178,22 @@ Para las pruebas basta con pasar otra implementación del contrato a `EmployeeMa
 | `data/datasources/employee_local_data_source_test.dart` | Datos ficticios, lista vacía, inmutabilidad, ids únicos, registro, actualización aislada, id inexistente |
 | `data/repositories/employee_repository_impl_test.dart` | Delegación de las tres operaciones y propagación de errores |
 | `presentation/cubit/employee_cubit_test.dart` | Secuencias de estados de carga, registro y actualización, en éxito y en fallo, y recuperación tras un fallo |
-| `widget_test.dart` | Arranque, Material 3 y carga de los empleados a través del Cubit |
+| `presentation/cubit/employee_state_test.dart` | Totales de activos e inactivos |
+| `presentation/widgets/employee_card_test.dart` | Datos de la tarjeta, estado con texto e interruptor, interruptor deshabilitado |
+| `presentation/pages/employees_page_test.dart` | Carga, lista, lista vacía, error con reintento, totales, pantallas pequeñas e interacción con el Cubit real |
+| `test/core/utils/date_formatter_test.dart` | Formato `dd/MM/yyyy` |
+| `test/widget_test.dart` | Arranque, Material 3 y carga de los empleados ficticios |
 
-Las rutas de la tabla son relativas a `test/features/employees/`, salvo `widget_test.dart`, que está en `test/`.
+Salvo las dos últimas filas, las rutas son relativas a `test/features/employees/`.
 
-Los defectos intencionales de esta fase están documentados en [depuracion-fase-3.md](depuracion-fase-3.md).
+Las pruebas de la página siguen dos estrategias:
 
-## Pendiente para la Fase 4
+- Un `MockCubit` (`bloc_test`) para fijar cada estado de presentación.
+- El `EmployeeCubit` real con un repositorio simulado (`mocktail`) para verificar que la interfaz reacciona a los estados que emite.
 
-- Listado definitivo de empleados.
-- Formulario de registro, con selección de fechas.
-- Acción para activar o desactivar desde la interfaz.
+Los defectos intencionales están documentados en [depuracion-fase-3.md](depuracion-fase-3.md) y [depuracion-fase-4.md](depuracion-fase-4.md).
+
+## Pendiente para la Fase 5
+
+- Formulario de registro de empleados, con validaciones.
+- Selectores de fecha de ingreso y de nacimiento.

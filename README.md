@@ -8,15 +8,25 @@ Construir una aplicación de gestión de empleados organizada con Clean Architec
 
 ## Estado actual
 
-**Fase 3: capa de datos.**
+**Fase 4: listado de empleados.**
 
-- Fuente de datos local en memoria con cinco empleados ficticios (`EmployeeLocalDataSource`).
-- Repositorio concreto `EmployeeRepositoryImpl`, que implementa el contrato del dominio.
-- `EmployeeCubit` carga, registra y cambia el estado activo de los empleados.
-- Inyección manual de dependencias en `main.dart` y `app.dart`.
-- Práctica de depuración con tres errores intencionales, documentada en [docs/depuracion-fase-3.md](docs/depuracion-fase-3.md).
+Funcionalidades disponibles:
 
-Los datos se guardan en memoria y **se pierden al reiniciar la aplicación**. Todavía no existen el listado definitivo ni el formulario de registro: al ejecutar la app se ve una pantalla provisional que indica cuántos empleados se cargaron.
+- **Listado de empleados:** muestra nombre, puesto, área, género, fecha de ingreso (`dd/MM/yyyy`) y estado. El estado se indica con texto e icono, no solo con color.
+- **Totales:** número total de empleados, activos e inactivos, calculados a partir de la lista actual.
+- **Activar o desactivar** a un empleado con un interruptor. La lista y los totales se actualizan con el estado que emite el Cubit. Si la operación falla, se muestra un mensaje y se conserva el estado real.
+- **Estados de pantalla:** carga, lista vacía («Todavía no hay empleados registrados.») y error con botón «Reintentar».
+- **Arquitectura:**
+  - fuente de datos en memoria con cinco empleados ficticios;
+  - repositorio concreto `EmployeeRepositoryImpl`;
+  - `EmployeeCubit`;
+  - inyección manual de dependencias en `main.dart` y `app.dart`.
+- **Prácticas de depuración** documentadas en [docs/depuracion-fase-3.md](docs/depuracion-fase-3.md) y [docs/depuracion-fase-4.md](docs/depuracion-fase-4.md).
+
+Limitaciones:
+
+- Los datos se guardan en memoria y **se pierden al reiniciar la aplicación**.
+- Todavía **no** existe el formulario de registro de empleados (Fase 5).
 
 ## Dependencias
 
@@ -66,12 +76,16 @@ Para ejecutar un solo archivo de pruebas:
 flutter test test/features/employees/presentation/cubit/employee_cubit_test.dart
 ```
 
-Pruebas disponibles (31 en total):
+Pruebas disponibles (57 en total):
 
+- `test/core/utils/date_formatter_test.dart`: formato de fechas.
 - `test/features/employees/domain/entities/employee_test.dart`: entidad `Employee`.
 - `test/features/employees/data/datasources/employee_local_data_source_test.dart`: fuente de datos en memoria.
 - `test/features/employees/data/repositories/employee_repository_impl_test.dart`: repositorio concreto.
 - `test/features/employees/presentation/cubit/employee_cubit_test.dart`: estados de `EmployeeCubit`.
+- `test/features/employees/presentation/cubit/employee_state_test.dart`: totales de activos e inactivos.
+- `test/features/employees/presentation/widgets/employee_card_test.dart`: tarjeta de empleado.
+- `test/features/employees/presentation/pages/employees_page_test.dart`: pantalla de listado (presentación e interacción).
 - `test/widget_test.dart`: arranque, tema Material 3 y carga de empleados.
 
 ## Estructura
