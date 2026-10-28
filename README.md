@@ -8,13 +8,23 @@ Construir una aplicación de gestión de empleados organizada con Clean Architec
 
 ## Estado actual
 
-**Fase 1: inicialización.**
+**Fase 2: arquitectura base.**
 
-- Proyecto generado con `flutter create`.
-- Estructura de carpetas modular definida.
-- Arranque mínimo de la aplicación (`main.dart` → `app.dart`).
+- Entidad de dominio `Employee` y contrato abstracto `EmployeeRepository`.
+- `EmployeeState` y `EmployeeCubit`, que por ahora solo carga empleados a través del contrato.
+- Tema claro con Material 3.
+- Pruebas automatizadas de la entidad, el Cubit y el arranque de la app.
 
-Todavía **no** se ha implementado la funcionalidad de empleados ni se han agregado dependencias de terceros (`flutter_bloc`, `equatable`, etc.).
+Todavía **no** existen la fuente de datos mock, la implementación del repositorio ni las pantallas de empleados. Al ejecutar la app solo se ve una pantalla provisional con el título.
+
+## Dependencias
+
+| Paquete | Versión | Uso |
+|---|---|---|
+| `flutter_bloc` | ^9.1.1 | Gestión de estado con Cubit |
+| `equatable` | ^3.0.0 | Igualdad por valor en entidades y estados |
+| `bloc_test` (dev) | ^10.0.0 | Pruebas de transiciones del Cubit |
+| `mocktail` (dev) | ^1.0.5 | Simulación del contrato del repositorio en pruebas |
 
 ## Requisitos previos
 
@@ -46,6 +56,12 @@ dart format lib test
 flutter analyze
 flutter test
 ```
+
+Pruebas disponibles:
+
+- `test/features/employees/domain/entities/employee_test.dart`: entidad `Employee`.
+- `test/features/employees/presentation/cubit/employee_cubit_test.dart`: estados de `EmployeeCubit`.
+- `test/widget_test.dart`: arranque de la aplicación y tema Material 3.
 
 ## Estructura prevista
 
