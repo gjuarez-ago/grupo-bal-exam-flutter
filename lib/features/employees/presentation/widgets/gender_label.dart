@@ -4,4 +4,5 @@ import '../../domain/entities/employee.dart';
 String genderLabel(Gender gender) => switch (gender) {
   Gender.male => 'Masculino',
   Gender.female => 'Femenino',
+  Gender.other => 'Otro',
 };

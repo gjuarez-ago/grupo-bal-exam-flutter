@@ -114,6 +114,38 @@ void main() {
       }
     });
 
+    testWidgets('los selectores ofrecen todas las áreas y géneros', (
+      tester,
+    ) async {
+      await openForm(tester);
+
+      await tester.tap(find.byKey(EmployeeFormPage.areaKey));
+      await tester.pumpAndSettle();
+      for (final area in [
+        'Administración',
+        'Finanzas',
+        'Operaciones',
+        'Recursos Humanos',
+        'Tecnología',
+        'Ventas',
+      ]) {
+        expect(find.text(area), findsWidgets, reason: area);
+      }
+      await tester.tap(find.text('Administración').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(EmployeeFormPage.genderKey));
+      await tester.pumpAndSettle();
+      for (final gender in ['Masculino', 'Femenino', 'Otro']) {
+        expect(find.text(gender), findsWidgets, reason: gender);
+      }
+      await tester.tap(find.text('Otro').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Administración'), findsOneWidget);
+      expect(find.text('Otro'), findsOneWidget);
+    });
+
     testWidgets('las fechas elegidas se muestran como dd/MM/yyyy', (
       tester,
     ) async {

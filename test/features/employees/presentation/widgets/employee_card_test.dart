@@ -80,6 +80,12 @@ void main() {
       expect(find.text('Masculino'), findsOneWidget);
     });
 
+    testWidgets('el género otro se muestra como "Otro"', (tester) async {
+      await pumpCard(tester, employee: employee.copyWith(gender: Gender.other));
+
+      expect(find.text('Otro'), findsOneWidget);
+    });
+
     testWidgets('al pulsar el switch notifica el nuevo valor', (tester) async {
       bool? received;
       await pumpCard(

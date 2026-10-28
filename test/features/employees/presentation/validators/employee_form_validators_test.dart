@@ -39,6 +39,20 @@ void main() {
         expect(employeeAreas, contains(employee.area));
       }
     });
+
+    test('el catálogo de áreas incluye las opciones del enunciado', () {
+      expect(
+        employeeAreas,
+        unorderedEquals([
+          'Tecnología',
+          'Recursos Humanos',
+          'Finanzas',
+          'Operaciones',
+          'Ventas',
+          'Administración',
+        ]),
+      );
+    });
   });
 
   group('EmployeeFormValidators — fecha de ingreso', () {

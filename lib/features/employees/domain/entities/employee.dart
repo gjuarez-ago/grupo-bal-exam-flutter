@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Género del empleado.
-enum Gender { male, female }
+enum Gender { male, female, other }
 
 /// Entidad de dominio que representa a un empleado.
 ///
