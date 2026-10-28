@@ -197,6 +197,9 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(find.text(EmployeesPage.loadErrorTitle), findsNothing);
       expect(find.byType(FilledButton), findsNothing);
+      // La acción útil del estado vacío es el botón de registro.
+      expect(find.text(EmployeesPage.emptyHint), findsOneWidget);
+      expect(find.text('Nuevo empleado'), findsOneWidget);
     });
 
     testWidgets('un error de carga muestra el mensaje y permite reintentar', (
