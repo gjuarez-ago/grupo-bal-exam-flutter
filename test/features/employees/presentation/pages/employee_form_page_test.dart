@@ -233,6 +233,37 @@ void main() {
       expect(openedPicker(tester).lastDate, DateTime(2026, 10, 26));
     });
 
+    testWidgets('las fechas solo se eligen en el calendario, sin escribirlas', (
+      tester,
+    ) async {
+      await openForm(tester);
+
+      for (final field in [
+        EmployeeFormPage.entryDateKey,
+        EmployeeFormPage.birthDateKey,
+      ]) {
+        await tester.tap(find.byKey(field));
+        await tester.pumpAndSettle();
+
+        expect(
+          openedPicker(tester).initialEntryMode,
+          DatePickerEntryMode.calendarOnly,
+        );
+        // No hay botón para cambiar al modo de escritura ni campo de texto.
+        expect(find.byIcon(Icons.edit_outlined), findsNothing);
+        expect(
+          find.descendant(
+            of: find.byType(DatePickerDialog),
+            matching: find.byType(TextField),
+          ),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Cancelar').last);
+        await tester.pumpAndSettle();
+      }
+    });
+
     testWidgets('el nacimiento no puede elegirse en o después del ingreso', (
       tester,
     ) async {

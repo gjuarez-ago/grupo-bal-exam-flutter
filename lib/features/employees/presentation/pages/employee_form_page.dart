@@ -136,6 +136,8 @@ class _EmployeeFormPageState extends State<EmployeeFormPage> {
       initialDate: clamped,
       firstDate: firstDate,
       lastDate: lastDate,
+      // Solo calendario: el usuario no puede escribir la fecha a mano.
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
       helpText: helpText,
       cancelText: 'Cancelar',
       confirmText: 'Aceptar',
