@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'core/theme/app_theme.dart';
+
 /// Widget raíz de la aplicación.
 ///
-/// Configuración mínima de arranque. El tema definitivo y las pantallas de
-/// empleados se incorporarán en fases posteriores.
+/// Las pantallas de empleados y la inyección del repositorio se incorporarán
+/// en la Fase 3.
 class EmployeeManagementApp extends StatelessWidget {
   const EmployeeManagementApp({super.key});
 
@@ -12,7 +14,7 @@ class EmployeeManagementApp extends StatelessWidget {
     return MaterialApp(
       title: 'Gestión de empleados',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.indigo)),
+      theme: AppTheme.light,
       home: const Scaffold(body: Center(child: Text('Gestión de empleados'))),
     );
   }
