@@ -21,12 +21,26 @@ class EmployeeCard extends StatelessWidget {
   static Key statusSwitchKey(String employeeId) =>
       Key('employee-status-switch-$employeeId');
 
+  static Key contentKey(String employeeId) =>
+      Key('employee-card-content-$employeeId');
+
+  /// Opacidad del contenido de un empleado inactivo. El interruptor conserva
+  /// la opacidad completa para seguir siendo fácil de usar.
+  static const inactiveOpacity = 0.55;
+
+  static const _fadeDuration = Duration(milliseconds: 200);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isActive = employee.isActive;
+    final contentOpacity = isActive ? 1.0 : inactiveOpacity;
 
     return Card(
       margin: EdgeInsets.zero,
+      // Un empleado inactivo se distingue con un fondo atenuado, contenido
+      // con menor opacidad y la etiqueta «Inactivo».
+      color: isActive ? null : theme.colorScheme.surfaceContainerHighest,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
         child: Column(
@@ -36,22 +50,29 @@ class EmployeeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          employee.fullName,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+                  child: AnimatedOpacity(
+                    key: contentKey(employee.id),
+                    opacity: contentOpacity,
+                    duration: _fadeDuration,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            employee.fullName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: isActive
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        _StatusBadge(isActive: employee.isActive),
-                      ],
+                          const SizedBox(height: 6),
+                          _StatusBadge(isActive: isActive),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -65,26 +86,33 @@ class EmployeeCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Wrap(
-                spacing: 16,
-                runSpacing: 8,
-                children: [
-                  _InfoItem(icon: Icons.work_outline, text: employee.position),
-                  _InfoItem(
-                    icon: Icons.apartment_outlined,
-                    text: employee.area,
-                  ),
-                  _InfoItem(
-                    icon: Icons.person_outline,
-                    text: genderLabel(employee.gender),
-                  ),
-                  _InfoItem(
-                    icon: Icons.event_outlined,
-                    text: 'Ingreso: ${formatDate(employee.entryDate)}',
-                  ),
-                ],
+            AnimatedOpacity(
+              opacity: contentOpacity,
+              duration: _fadeDuration,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Wrap(
+                  spacing: 16,
+                  runSpacing: 8,
+                  children: [
+                    _InfoItem(
+                      icon: Icons.work_outline,
+                      text: employee.position,
+                    ),
+                    _InfoItem(
+                      icon: Icons.apartment_outlined,
+                      text: employee.area,
+                    ),
+                    _InfoItem(
+                      icon: Icons.person_outline,
+                      text: genderLabel(employee.gender),
+                    ),
+                    _InfoItem(
+                      icon: Icons.event_outlined,
+                      text: 'Ingreso: ${formatDate(employee.entryDate)}',
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

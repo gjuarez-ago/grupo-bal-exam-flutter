@@ -41,6 +41,14 @@ void main() {
     ),
   );
 
+  Card cardOf(WidgetTester tester) => tester.widget<Card>(
+    find.descendant(of: find.byType(EmployeeCard), matching: find.byType(Card)),
+  );
+
+  double contentOpacity(WidgetTester tester) => tester
+      .widget<AnimatedOpacity>(find.byKey(EmployeeCard.contentKey('emp-1')))
+      .opacity;
+
   group('EmployeeCard', () {
     testWidgets('muestra los datos principales del empleado', (tester) async {
       await pumpCard(tester, employee: employee);
@@ -70,6 +78,34 @@ void main() {
       expect(find.text('Inactivo'), findsOneWidget);
       expect(find.text('Activo'), findsNothing);
       expect(findSwitch(tester).value, isFalse);
+    });
+
+    testWidgets('un empleado activo se muestra con su apariencia normal', (
+      tester,
+    ) async {
+      await pumpCard(tester, employee: employee);
+
+      expect(cardOf(tester).color, isNull);
+      expect(contentOpacity(tester), 1.0);
+    });
+
+    testWidgets('un empleado inactivo se muestra atenuado', (tester) async {
+      await pumpCard(tester, employee: employee.copyWith(isActive: false));
+
+      final context = tester.element(find.byType(EmployeeCard));
+      expect(
+        cardOf(tester).color,
+        Theme.of(context).colorScheme.surfaceContainerHighest,
+      );
+      expect(contentOpacity(tester), EmployeeCard.inactiveOpacity);
+      // El interruptor no se atenúa: debe seguir siendo fácil de usar.
+      expect(
+        find.ancestor(
+          of: find.byKey(EmployeeCard.statusSwitchKey('emp-1')),
+          matching: find.byType(AnimatedOpacity),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets('el género masculino se muestra como "Masculino"', (

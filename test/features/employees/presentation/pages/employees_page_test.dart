@@ -310,6 +310,15 @@ void main() {
       expect(cubit.state.employees.first.isActive, isFalse);
       expect(switchValue(tester, 'emp-1'), isFalse);
       expect(inCard('emp-1', find.text('Inactivo')), findsOneWidget);
+      // La fila cambia visualmente al desactivarse.
+      expect(
+        tester
+            .widget<AnimatedOpacity>(
+              find.byKey(EmployeeCard.contentKey('emp-1')),
+            )
+            .opacity,
+        EmployeeCard.inactiveOpacity,
+      );
       expect(switchValue(tester, 'emp-2'), isTrue);
       expect(inCard('emp-2', find.text('Activo')), findsOneWidget);
       expect(switchValue(tester, 'emp-3'), isFalse);
