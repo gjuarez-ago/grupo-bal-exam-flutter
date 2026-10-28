@@ -12,6 +12,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../../../helpers/employee_form_helpers.dart';
+
 class MockEmployeeCubit extends MockCubit<EmployeeState>
     implements EmployeeCubit {}
 
@@ -91,51 +93,6 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> selectOption(
-    WidgetTester tester,
-    Key field,
-    String option,
-  ) async {
-    await tester.tap(find.byKey(field));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(option).last);
-    await tester.pumpAndSettle();
-  }
-
-  Future<void> pickDay(WidgetTester tester, Key field, String day) async {
-    await tester.tap(find.byKey(field));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(day));
-    await tester.tap(find.text('Aceptar'));
-    await tester.pumpAndSettle();
-  }
-
-  /// Completa el formulario con datos válidos. Con `today` = 27/10/2026, la
-  /// fecha de ingreso queda en 15/10/2026 y la de nacimiento en 10/10/1996.
-  Future<void> fillValidForm(
-    WidgetTester tester, {
-    String fullName = '  Luis Ramírez  ',
-    String position = ' QA ',
-    bool selectArea = true,
-    bool selectGender = true,
-  }) async {
-    await tester.enterText(find.byKey(EmployeeFormPage.fullNameKey), fullName);
-    await tester.enterText(find.byKey(EmployeeFormPage.positionKey), position);
-    if (selectArea) {
-      await selectOption(tester, EmployeeFormPage.areaKey, 'Tecnología');
-    }
-    if (selectGender) {
-      await selectOption(tester, EmployeeFormPage.genderKey, 'Masculino');
-    }
-    await pickDay(tester, EmployeeFormPage.entryDateKey, '15');
-    await pickDay(tester, EmployeeFormPage.birthDateKey, '10');
-  }
-
-  Future<void> submit(WidgetTester tester) async {
-    await tester.tap(find.widgetWithText(FilledButton, 'Registrar empleado'));
-    await tester.pumpAndSettle();
-  }
-
   DatePickerDialog openedPicker(WidgetTester tester) =>
       tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
 
@@ -162,7 +119,7 @@ void main() {
     ) async {
       await openForm(tester);
 
-      await fillValidForm(tester);
+      await fillValidEmployeeForm(tester);
 
       expect(find.text('15/10/2026'), findsOneWidget);
       expect(find.text('10/10/1996'), findsOneWidget);
@@ -175,7 +132,7 @@ void main() {
     ) async {
       await openForm(tester);
 
-      await submit(tester);
+      await submitEmployeeForm(tester);
 
       for (final message in [
         'Ingresa el nombre completo.',
@@ -192,9 +149,9 @@ void main() {
 
     testWidgets('un nombre con solo espacios impide registrar', (tester) async {
       await openForm(tester);
-      await fillValidForm(tester, fullName: '   ');
+      await fillValidEmployeeForm(tester, fullName: '   ');
 
-      await submit(tester);
+      await submitEmployeeForm(tester);
 
       expect(find.text('Ingresa el nombre completo.'), findsOneWidget);
       verifyNeverRegistered();
@@ -202,9 +159,9 @@ void main() {
 
     testWidgets('un puesto vacío impide registrar', (tester) async {
       await openForm(tester);
-      await fillValidForm(tester, position: '');
+      await fillValidEmployeeForm(tester, position: '');
 
-      await submit(tester);
+      await submitEmployeeForm(tester);
 
       expect(find.text('Ingresa el puesto.'), findsOneWidget);
       verifyNeverRegistered();
@@ -212,9 +169,9 @@ void main() {
 
     testWidgets('no seleccionar área impide registrar', (tester) async {
       await openForm(tester);
-      await fillValidForm(tester, selectArea: false);
+      await fillValidEmployeeForm(tester, selectArea: false);
 
-      await submit(tester);
+      await submitEmployeeForm(tester);
 
       expect(find.text('Selecciona un área.'), findsOneWidget);
       verifyNeverRegistered();
@@ -222,9 +179,9 @@ void main() {
 
     testWidgets('no seleccionar género impide registrar', (tester) async {
       await openForm(tester);
-      await fillValidForm(tester, selectGender: false);
+      await fillValidEmployeeForm(tester, selectGender: false);
 
-      await submit(tester);
+      await submitEmployeeForm(tester);
 
       expect(find.text('Selecciona un género.'), findsOneWidget);
       verifyNeverRegistered();
@@ -248,7 +205,7 @@ void main() {
       tester,
     ) async {
       await openForm(tester);
-      await pickDay(tester, EmployeeFormPage.entryDateKey, '15');
+      await pickFormDay(tester, EmployeeFormPage.entryDateKey, '15');
 
       await tester.tap(find.byKey(EmployeeFormPage.birthDateKey));
       await tester.pumpAndSettle();
@@ -263,9 +220,9 @@ void main() {
     ) async {
       whenRegister().thenAnswer((_) async => true);
       await openForm(tester);
-      await fillValidForm(tester);
+      await fillValidEmployeeForm(tester);
 
-      await submit(tester);
+      await submitEmployeeForm(tester);
 
       verify(
         () => cubit.registerEmployee(
@@ -298,9 +255,9 @@ void main() {
       );
       whenRegister().thenAnswer((_) async => false);
       await openForm(tester);
-      await fillValidForm(tester);
+      await fillValidEmployeeForm(tester);
 
-      await submit(tester);
+      await submitEmployeeForm(tester);
 
       expect(find.byKey(EmployeeFormPage.submitErrorKey), findsOneWidget);
       expect(find.text('No se pudo registrar al empleado.'), findsOneWidget);
@@ -309,7 +266,7 @@ void main() {
       expect(find.text('  Luis Ramírez  '), findsOneWidget);
       expect(find.text('15/10/2026'), findsOneWidget);
 
-      await submit(tester);
+      await submitEmployeeForm(tester);
 
       verify(
         () => cubit.registerEmployee(
@@ -327,7 +284,7 @@ void main() {
       final completer = Completer<bool>();
       whenRegister().thenAnswer((_) => completer.future);
       await openForm(tester);
-      await fillValidForm(tester);
+      await fillValidEmployeeForm(tester);
 
       await tester.tap(find.widgetWithText(FilledButton, 'Registrar empleado'));
       await tester.pump();
@@ -353,7 +310,7 @@ void main() {
 
     testWidgets('cancelar regresa sin registrar', (tester) async {
       await openForm(tester);
-      await fillValidForm(tester);
+      await fillValidEmployeeForm(tester);
 
       await tester.tap(find.text('Cancelar'));
       await tester.pumpAndSettle();
