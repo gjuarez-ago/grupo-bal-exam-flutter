@@ -134,4 +134,167 @@ void main() {
       ],
     );
   });
+
+  group('EmployeeCubit.registerEmployee', () {
+    final newEmployee = Employee(
+      id: 'emp-3',
+      fullName: 'Luis Ramírez',
+      area: 'Tecnología',
+      position: 'QA',
+      gender: Gender.male,
+      entryDate: DateTime(2024, 1, 10),
+      birthDate: DateTime(1995, 5, 20),
+      isActive: true,
+    );
+
+    setUpAll(() {
+      registerFallbackValue(Gender.male);
+      registerFallbackValue(DateTime(2000));
+    });
+
+    When<Future<Employee>> whenRegister() => when(
+      () => repository.registerEmployee(
+        fullName: any(named: 'fullName'),
+        area: any(named: 'area'),
+        position: any(named: 'position'),
+        gender: any(named: 'gender'),
+        entryDate: any(named: 'entryDate'),
+        birthDate: any(named: 'birthDate'),
+      ),
+    );
+
+    Future<bool> register(EmployeeCubit cubit) => cubit.registerEmployee(
+      fullName: newEmployee.fullName,
+      area: newEmployee.area,
+      position: newEmployee.position,
+      gender: newEmployee.gender,
+      entryDate: newEmployee.entryDate,
+      birthDate: newEmployee.birthDate,
+    );
+
+    blocTest<EmployeeCubit, EmployeeState>(
+      'agrega el empleado registrado al final de la lista actual',
+      setUp: () => whenRegister().thenAnswer((_) async => newEmployee),
+      build: () => EmployeeCubit(repository),
+      seed: () =>
+          EmployeeState(status: EmployeeStatus.success, employees: employees),
+      act: (cubit) async => expect(await register(cubit), isTrue),
+      expect: () => [
+        EmployeeState(status: EmployeeStatus.loading, employees: employees),
+        EmployeeState(
+          status: EmployeeStatus.success,
+          employees: [...employees, newEmployee],
+        ),
+      ],
+      verify: (_) => verify(
+        () => repository.registerEmployee(
+          fullName: 'Luis Ramírez',
+          area: 'Tecnología',
+          position: 'QA',
+          gender: Gender.male,
+          entryDate: DateTime(2024, 1, 10),
+          birthDate: DateTime(1995, 5, 20),
+        ),
+      ).called(1),
+    );
+
+    blocTest<EmployeeCubit, EmployeeState>(
+      'si el registro falla emite fallo y conserva la lista',
+      setUp: () => whenRegister().thenThrow(
+        const EmployeeRepositoryException('No se pudo registrar.'),
+      ),
+      build: () => EmployeeCubit(repository),
+      seed: () =>
+          EmployeeState(status: EmployeeStatus.success, employees: employees),
+      act: (cubit) async => expect(await register(cubit), isFalse),
+      expect: () => [
+        EmployeeState(status: EmployeeStatus.loading, employees: employees),
+        EmployeeState(
+          status: EmployeeStatus.failure,
+          employees: employees,
+          errorMessage: 'No se pudo registrar.',
+        ),
+      ],
+    );
+  });
+
+  group('EmployeeCubit.updateEmployeeStatus', () {
+    final deactivated = employees.first.copyWith(isActive: false);
+
+    blocTest<EmployeeCubit, EmployeeState>(
+      'reemplaza solo el empleado actualizado y conserva a los demás',
+      setUp: () {
+        when(
+          () => repository.updateEmployeeStatus(id: 'emp-1', isActive: false),
+        ).thenAnswer((_) async => deactivated);
+      },
+      build: () => EmployeeCubit(repository),
+      seed: () =>
+          EmployeeState(status: EmployeeStatus.success, employees: employees),
+      act: (cubit) async => expect(
+        await cubit.updateEmployeeStatus(id: 'emp-1', isActive: false),
+        isTrue,
+      ),
+      expect: () => [
+        EmployeeState(status: EmployeeStatus.loading, employees: employees),
+        EmployeeState(
+          status: EmployeeStatus.success,
+          employees: [deactivated, employees[1]],
+        ),
+      ],
+    );
+
+    blocTest<EmployeeCubit, EmployeeState>(
+      'un id inexistente emite fallo sin modificar la lista',
+      setUp: () {
+        when(
+          () =>
+              repository.updateEmployeeStatus(id: 'no-existe', isActive: true),
+        ).thenThrow(const EmployeeNotFoundException('no-existe'));
+      },
+      build: () => EmployeeCubit(repository),
+      seed: () =>
+          EmployeeState(status: EmployeeStatus.success, employees: employees),
+      act: (cubit) async => expect(
+        await cubit.updateEmployeeStatus(id: 'no-existe', isActive: true),
+        isFalse,
+      ),
+      expect: () => [
+        EmployeeState(status: EmployeeStatus.loading, employees: employees),
+        EmployeeState(
+          status: EmployeeStatus.failure,
+          employees: employees,
+          errorMessage: const EmployeeNotFoundException('no-existe').message,
+        ),
+      ],
+    );
+
+    blocTest<EmployeeCubit, EmployeeState>(
+      'después de un fallo el Cubit puede seguir operando',
+      setUp: () {
+        when(
+          () =>
+              repository.updateEmployeeStatus(id: 'no-existe', isActive: true),
+        ).thenThrow(const EmployeeNotFoundException('no-existe'));
+        when(
+          () => repository.updateEmployeeStatus(id: 'emp-1', isActive: false),
+        ).thenAnswer((_) async => deactivated);
+      },
+      build: () => EmployeeCubit(repository),
+      seed: () =>
+          EmployeeState(status: EmployeeStatus.success, employees: employees),
+      act: (cubit) async {
+        await cubit.updateEmployeeStatus(id: 'no-existe', isActive: true);
+        await cubit.updateEmployeeStatus(id: 'emp-1', isActive: false);
+      },
+      skip: 2,
+      expect: () => [
+        EmployeeState(status: EmployeeStatus.loading, employees: employees),
+        EmployeeState(
+          status: EmployeeStatus.success,
+          employees: [deactivated, employees[1]],
+        ),
+      ],
+    );
+  });
 }
