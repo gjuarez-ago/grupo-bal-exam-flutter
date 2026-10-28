@@ -186,7 +186,7 @@ void main() {
       expectSummary(total: 3, active: 2, inactive: 1);
     });
 
-    testWidgets('una lista vacía muestra el mensaje sin acciones de registro', (
+    testWidgets('una lista vacía muestra el mensaje y no el error', (
       tester,
     ) async {
       givenState(const EmployeeState(status: EmployeeStatus.success));

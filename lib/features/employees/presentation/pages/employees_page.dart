@@ -5,13 +5,18 @@ import '../cubit/employee_cubit.dart';
 import '../cubit/employee_state.dart';
 import '../widgets/employee_card.dart';
 import '../widgets/employee_list_summary.dart';
+import 'employee_form_page.dart';
 
 /// Pantalla de listado de empleados.
 ///
 /// Toma el [EmployeeCubit] del árbol; la carga inicial la dispara quien crea
 /// el Cubit, por lo que no se repite al reconstruir esta pantalla.
 class EmployeesPage extends StatelessWidget {
-  const EmployeesPage({super.key});
+  const EmployeesPage({super.key, this.today});
+
+  /// Fecha de referencia que se pasa al formulario de registro. Por defecto,
+  /// la fecha actual; las pruebas la fijan para ser deterministas.
+  final DateTime? today;
 
   static const emptyMessage = 'Todavía no hay empleados registrados.';
   static const loadErrorTitle = 'No se pudieron cargar los empleados.';
@@ -19,6 +24,15 @@ class EmployeesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => EmployeeFormPage(today: today),
+          ),
+        ),
+        icon: const Icon(Icons.person_add_alt_1_outlined),
+        label: const Text('Nuevo empleado'),
+      ),
       body: SafeArea(
         child: BlocConsumer<EmployeeCubit, EmployeeState>(
           // Con datos en pantalla, un fallo (por ejemplo, al cambiar un
@@ -29,6 +43,9 @@ class EmployeesPage extends StatelessWidget {
               previous.status != EmployeeStatus.failure &&
               current.employees.isNotEmpty,
           listener: (context, state) {
+            // Si hay otra pantalla encima (por ejemplo, el formulario de
+            // registro), es esa pantalla la que informa el error.
+            if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
               ..showSnackBar(
@@ -121,7 +138,8 @@ class _EmployeeList extends StatelessWidget {
     final controlsEnabled = state.status != EmployeeStatus.loading;
 
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      // El espacio inferior evita que el botón flotante tape la última tarjeta.
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
       itemCount: employees.length + 1,
       separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 16 : 12),
       itemBuilder: (context, index) {
