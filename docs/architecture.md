@@ -1,6 +1,6 @@
 # Arquitectura
 
-> **Estado:** Fase 4 (listado de empleados). La pantalla `EmployeesPage` muestra la lista, los totales y permite activar o desactivar empleados a través del Cubit, con datos ficticios en memoria. Todavía **no** existe el formulario de registro: `registerEmployee` está disponible en el Cubit pero ninguna pantalla lo usa.
+> **Estado:** Fase 5 (registro de empleados). Desde `EmployeesPage` se consulta el listado, se activa o desactiva a cada empleado y se registran empleados nuevos con `EmployeeFormPage`. Los datos viven en memoria y se pierden al reiniciar la aplicación.
 
 ## Enfoque
 
@@ -9,10 +9,10 @@ El proyecto sigue Clean Architecture organizada por funcionalidades (*features*)
 ## Flujo
 
 ```text
-EmployeesPage (EmployeeListSummary, EmployeeCard, EmployeeStatusControl)
-    |
-    v
-EmployeeCubit
+EmployeesPage (listado)  ──►  EmployeeFormPage (registro)  ──►  EmployeeRegistrationSuccessPage
+    |                               |
+    v                               v
+EmployeeCubit (instancia única, compartida por ambas pantallas)
     |
     v
 EmployeeRepository (contrato de dominio)
@@ -146,7 +146,7 @@ La vista se decide así:
 
 Comportamiento con datos en pantalla:
 
-- **Fallo de una operación** (por ejemplo, al cambiar un estado): se informa con un `SnackBar` y la lista sigue mostrando el estado real del Cubit.
+- **Fallo de una operación** (por ejemplo, al cambiar un estado): se informa con un `SnackBar` y la lista sigue mostrando el estado real del Cubit. El `SnackBar` solo aparece si el listado es la ruta visible (`ModalRoute.isCurrent`). Si el fallo ocurre mientras el formulario está abierto, lo informa el formulario y el mensaje no se duplica.
 - **Operación en curso** (`status == loading`): los interruptores se deshabilitan para evitar cambios simultáneos.
 
 Widgets de apoyo, en `presentation/widgets/`:
@@ -158,7 +158,68 @@ Widgets de apoyo, en `presentation/widgets/`:
 - `EmployeeStatusControl`: un `Switch` sin estado propio; su valor siempre proviene de `employee.isActive`.
 - `EmployeeListSummary`: muestra los totales que recibe del estado.
 
-La fecha se formatea con `formatDate` (`lib/core/utils/date_formatter.dart`), en Dart puro, sin agregar `intl`. La entidad conserva el `DateTime` original.
+La fecha se formatea con `formatDate` (`lib/core/utils/date_formatter.dart`), en Dart puro. La entidad conserva el `DateTime` original.
+
+El botón flotante **Nuevo empleado** abre el formulario de registro con `Navigator.push`.
+
+### Registro: `EmployeeFormPage`
+
+`lib/features/employees/presentation/pages/employee_form_page.dart`
+
+```text
+EmployeeFormPage
+    | 1. Form.validate() con EmployeeFormValidators (antes de llamar al Cubit)
+    v
+EmployeeCubit.registerEmployee(...)  → emite loading y después success | failure
+    |                                   devuelve true | false
+    v
+EmployeeRepository.registerEmployee (contrato)
+    ^
+    |
+EmployeeRepositoryImpl → EmployeeLocalDataSource.addEmployee
+                          (asigna el id emp-N y crea al empleado activo)
+```
+
+**Campos:**
+
+| Campo | Componente | Regla |
+|---|---|---|
+| Nombre completo | `TextFormField` | Obligatorio; se recortan espacios; sin restricciones de caracteres |
+| Puesto | `TextFormField` | Obligatorio; se recortan espacios |
+| Área | `DropdownButtonFormField` | Obligatoria; opciones de `employeeAreas` (dominio), coherentes con los datos ficticios |
+| Género | `DropdownButtonFormField` | Obligatorio; valores de `Gender` |
+| Fecha de ingreso | `showDatePicker` | Obligatoria; no puede ser futura |
+| Fecha de nacimiento | `showDatePicker` | Obligatoria; anterior a hoy y a la fecha de ingreso; sin edad mínima |
+
+**Validaciones:**
+
+- Las reglas están en `presentation/validators/employee_form_validators.dart` como funciones puras, fuera de los widgets.
+- Reciben la fecha de referencia como parámetro, de modo que las pruebas no dependen de la fecha real.
+- Los selectores de fecha limitan además el rango elegible:
+  - ingreso: hasta hoy, y después del nacimiento si ya se eligió;
+  - nacimiento: hasta el día anterior al ingreso, o hasta ayer si aún no hay ingreso.
+- La capa de datos no repite estas validaciones de interfaz.
+
+**Estado de la pantalla:**
+
+- La pantalla solo guarda el estado propio del formulario: los valores capturados, `_isSubmitting` y el mensaje de error del envío.
+- No copia la lista de empleados.
+- Mientras `_isSubmitting` es `true`, el botón y los campos se deshabilitan y se ignoran pulsaciones repetidas, así que no se crean duplicados.
+
+**Resultado:**
+
+- **Éxito** (`registerEmployee` devuelve `true`): se reemplaza la ruta por `EmployeeRegistrationSuccessPage`. Su botón «Volver al listado» regresa a `EmployeesPage`, que ya muestra al nuevo empleado.
+- **Fallo** (`false`): se muestra el mensaje del estado (`errorMessage`), se conservan los datos capturados y se puede reintentar. Nunca se muestra la pantalla de éxito.
+- **Cancelar**: regresa al listado sin llamar al Cubit.
+- Después del `await` se comprueba `mounted` antes de usar el `BuildContext`.
+
+**Cómo se actualiza la lista sin perder empleados:**
+
+- `EmployeeCubit.registerEmployee` emite `employees: [...state.employees, employee]`: una lista **nueva**, con los empleados anteriores y el registrado al final. `copyWith` la vuelve no modificable.
+- Los totales (`totalCount`, `activeCount`, `inactiveCount`) se recalculan a partir de esa lista.
+- No hace falta volver a consultar la fuente de datos. Si se consulta, la fuente en memoria también conserva al empleado mientras la aplicación siga abierta.
+
+**Localización:** `app.dart` configura `flutter_localizations` (incluido en el SDK) con `es_MX`, de modo que el selector de fechas y los textos de Material se muestran en español.
 
 ## Inyección de dependencias
 
@@ -181,19 +242,17 @@ Para las pruebas basta con pasar otra implementación del contrato a `EmployeeMa
 | `presentation/cubit/employee_state_test.dart` | Totales de activos e inactivos |
 | `presentation/widgets/employee_card_test.dart` | Datos de la tarjeta, estado con texto e interruptor, interruptor deshabilitado |
 | `presentation/pages/employees_page_test.dart` | Carga, lista, lista vacía, error con reintento, totales, pantallas pequeñas e interacción con el Cubit real |
+| `presentation/pages/employee_form_page_test.dart` | Campos, cada validación obligatoria, rangos de los selectores de fecha, envío válido con datos depurados, error con reintento, envíos repetidos y cancelación |
+| `presentation/validators/employee_form_validators_test.dart` | Reglas de texto, selección y coherencia de fechas |
+| `employee_registration_flow_test.dart` | Flujo listado → formulario → éxito → listado con el repositorio real, y registro fallido |
 | `test/core/utils/date_formatter_test.dart` | Formato `dd/MM/yyyy` |
 | `test/widget_test.dart` | Arranque, Material 3 y carga de los empleados ficticios |
 
-Salvo las dos últimas filas, las rutas son relativas a `test/features/employees/`.
+Salvo las dos últimas filas, las rutas son relativas a `test/features/employees/`. Los pasos para completar el formulario se comparten en `test/helpers/employee_form_helpers.dart`.
 
 Las pruebas de la página siguen dos estrategias:
 
 - Un `MockCubit` (`bloc_test`) para fijar cada estado de presentación.
 - El `EmployeeCubit` real con un repositorio simulado (`mocktail`) para verificar que la interfaz reacciona a los estados que emite.
 
-Los defectos intencionales están documentados en [depuracion-fase-3.md](depuracion-fase-3.md) y [depuracion-fase-4.md](depuracion-fase-4.md).
-
-## Pendiente para la Fase 5
-
-- Formulario de registro de empleados, con validaciones.
-- Selectores de fecha de ingreso y de nacimiento.
+Los defectos intencionales están documentados en [depuracion-fase-3.md](depuracion-fase-3.md), [depuracion-fase-4.md](depuracion-fase-4.md) y [depuracion-fase-5.md](depuracion-fase-5.md).
