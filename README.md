@@ -8,7 +8,7 @@ Construir una aplicación de gestión de empleados organizada con Clean Architec
 
 ## Estado actual
 
-**Fase 5: registro de empleados.**
+**Fase 6: integración y navegación.** La aplicación funciona de principio a fin: listado, registro con confirmación, regreso al listado actualizado y cambio de estado, sin reiniciar la aplicación.
 
 Funcionalidades disponibles:
 
@@ -16,13 +16,13 @@ Funcionalidades disponibles:
 - **Totales:** número total de empleados, activos e inactivos, calculados a partir de la lista actual.
 - **Activar o desactivar** a un empleado con un interruptor. Si la operación falla, se muestra un mensaje y se conserva el estado real.
 - **Registro de empleados** desde el botón **Nuevo empleado** (ver más abajo).
-- **Estados de pantalla:** carga, lista vacía («Todavía no hay empleados registrados.») y error con botón «Reintentar».
-- **Interfaz en español**, incluido el selector de fechas.
-- **Prácticas de depuración** documentadas en [docs/depuracion-fase-3.md](docs/depuracion-fase-3.md), [docs/depuracion-fase-4.md](docs/depuracion-fase-4.md) y [docs/depuracion-fase-5.md](docs/depuracion-fase-5.md).
+- **Estados de pantalla:** carga, lista vacía (con indicación para registrar al primer empleado) y error con botón «Reintentar».
+- **Interfaz en español**, incluido el selector de fechas. Probada en pantallas pequeñas, también con el teclado abierto.
+- **Prácticas de depuración** documentadas en [docs/depuracion-fase-3.md](docs/depuracion-fase-3.md), [docs/depuracion-fase-4.md](docs/depuracion-fase-4.md), [docs/depuracion-fase-5.md](docs/depuracion-fase-5.md) y [docs/depuracion-fase-6.md](docs/depuracion-fase-6.md).
 
 ## Registro de empleados
 
-1. En la pantalla **Empleados**, pulsa **Nuevo empleado**.
+1. En la pantalla **Empleados**, pulsa **Nuevo empleado**. Pulsarlo varias veces seguidas abre un solo formulario.
 2. Completa el formulario **Registrar empleado**:
    - **Nombre completo** y **Puesto**: obligatorios. Se ignoran los espacios al inicio y al final.
    - **Área** y **Género**: se eligen de una lista.
@@ -34,6 +34,14 @@ Funcionalidades disponibles:
 4. Si el registro termina bien, aparece la pantalla **Empleado registrado**. Con **Volver al listado** regresas a la lista, donde ya aparece el nuevo empleado (activo) y los totales están actualizados.
 5. Si el registro falla, se muestra el mensaje de error, los datos capturados se conservan y puedes reintentar.
 6. **Cancelar** vuelve al listado sin registrar a nadie.
+
+## Cómo se comparte el estado entre pantallas
+
+- Hay **una sola instancia** de `EmployeeCubit` durante la sesión. Se crea en `app.dart`, por encima de `MaterialApp`, y la usan el listado, el formulario y la confirmación.
+- El formulario registra a través de ese Cubit. Al volver al listado, la lista y los totales ya están actualizados, sin recargar ni reiniciar.
+- Los cambios de estado activo/inactivo también viven en el Cubit, así que se conservan al ir y volver del formulario.
+- Las pantallas no guardan copias de la lista. Los datos iniciales solo se cargan al arrancar, así que volver al listado no sobrescribe los cambios de la sesión.
+- La confirmación de éxito depende del resultado real del registro. Si el repositorio falla, no se muestra y el empleado no se agrega.
 
 ## Persistencia y sus limitaciones
 
@@ -114,7 +122,7 @@ Para ejecutar un solo archivo de pruebas:
 flutter test test/features/employees/presentation/pages/employee_form_page_test.dart
 ```
 
-Pruebas disponibles (87 en total):
+Pruebas disponibles (99 en total):
 
 - `test/core/utils/date_formatter_test.dart`: formato de fechas.
 - `test/features/employees/domain/entities/employee_test.dart`: entidad `Employee`.
@@ -127,6 +135,7 @@ Pruebas disponibles (87 en total):
 - `test/features/employees/presentation/pages/employees_page_test.dart`: pantalla de listado.
 - `test/features/employees/presentation/pages/employee_form_page_test.dart`: formulario de registro.
 - `test/features/employees/employee_registration_flow_test.dart`: flujo completo listado → registro → listado.
+- `test/app_flow_test.dart`: aplicación completa (navegación, estado compartido entre pantallas, errores y pantallas pequeñas).
 - `test/widget_test.dart`: arranque, tema Material 3 y carga de empleados.
 
 ## Estructura

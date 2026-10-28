@@ -1,6 +1,6 @@
 # Arquitectura
 
-> **Estado:** Fase 5 (registro de empleados). Desde `EmployeesPage` se consulta el listado, se activa o desactiva a cada empleado y se registran empleados nuevos con `EmployeeFormPage`. Los datos viven en memoria y se pierden al reiniciar la aplicación.
+> **Estado:** Fase 6 (integración y navegación). El flujo completo funciona de principio a fin: listado, registro con confirmación, regreso al listado actualizado y cambio de estado. Todas las pantallas comparten un único `EmployeeCubit` durante la sesión. Los datos viven en memoria y se pierden al cerrar o reiniciar la aplicación.
 
 ## Enfoque
 
@@ -160,7 +160,9 @@ Widgets de apoyo, en `presentation/widgets/`:
 
 La fecha se formatea con `formatDate` (`lib/core/utils/date_formatter.dart`), en Dart puro. La entidad conserva el `DateTime` original.
 
-El botón flotante **Nuevo empleado** abre el formulario de registro con `Navigator.push`.
+El botón flotante **Nuevo empleado** abre el formulario de registro con `Navigator.push`. Ignora pulsaciones mientras el formulario está abierto, así que no se apilan formularios duplicados.
+
+El estado vacío explica cómo registrar al primer empleado: «Pulsa «Nuevo empleado» para registrar al primero.».
 
 ### Registro: `EmployeeFormPage`
 
@@ -186,7 +188,7 @@ EmployeeRepositoryImpl → EmployeeLocalDataSource.addEmployee
 |---|---|---|
 | Nombre completo | `TextFormField` | Obligatorio; se recortan espacios; sin restricciones de caracteres |
 | Puesto | `TextFormField` | Obligatorio; se recortan espacios |
-| Área | `DropdownButtonFormField` | Obligatoria; opciones de `employeeAreas` (dominio), coherentes con los datos ficticios |
+| Área | `DropdownButtonFormField` (`isExpanded`) | Obligatoria; opciones de `employeeAreas` (dominio), coherentes con los datos ficticios |
 | Género | `DropdownButtonFormField` | Obligatorio; valores de `Gender` |
 | Fecha de ingreso | `showDatePicker` | Obligatoria; no puede ser futura |
 | Fecha de nacimiento | `showDatePicker` | Obligatoria; anterior a hoy y a la fecha de ingreso; sin edad mínima |
@@ -221,6 +223,38 @@ EmployeeRepositoryImpl → EmployeeLocalDataSource.addEmployee
 
 **Localización:** `app.dart` configura `flutter_localizations` (incluido en el SDK) con `es_MX`, de modo que el selector de fechas y los textos de Material se muestran en español.
 
+## Navegación y estado compartido
+
+La navegación usa `Navigator` con `MaterialPageRoute`, sin paquetes adicionales:
+
+```text
+EmployeesPage ──push──► EmployeeFormPage ──pushReplacement──► EmployeeRegistrationSuccessPage
+      ▲                       │ Cancelar (pop)                          │ Volver al listado (pop)
+      └───────────────────────┴─────────────────────────────────────────┘
+```
+
+Flujo de datos de un registro:
+
+```text
+Listado → Formulario → Validación → EmployeeCubit → EmployeeRepository (contrato)
+        → EmployeeRepositoryImpl → EmployeeLocalDataSource → estado actualizado → Listado
+```
+
+**Cómo se conserva el estado durante la navegación:**
+
+- `EmployeeCubit` se crea **una sola vez** en `app.dart`, con un `BlocProvider` situado por encima de `MaterialApp`. Todas las rutas que crea el `Navigator` cuelgan de ese punto y leen la misma instancia con `context.read`.
+- Ninguna ruta crea su propio Cubit. Un `BlocProvider(create: …)` dentro de una ruta crearía otra fuente de verdad; es el Error 1 de [depuracion-fase-6.md](depuracion-fase-6.md).
+- El repositorio se crea una vez en `main.dart`. Reconstruir `EmployeeManagementApp` no recrea el Cubit ni vuelve a cargar los datos, porque el `BlocProvider` conserva su instancia. Hay una prueba que lo verifica.
+- La carga inicial (`loadEmployees`) se dispara al crear el Cubit, no al volver al listado. Regresar de otra pantalla no sobrescribe los cambios de la sesión.
+- Los widgets no guardan copias de la lista. Los cambios de estado activo/inactivo y los registros viven en el estado del Cubit y se ven en cualquier pantalla.
+
+**Cómo se comunica el resultado del registro:**
+
+- El formulario espera `await cubit.registerEmployee(...)`, que devuelve `true` o `false` en coherencia con el estado emitido (`success` o `failure`).
+- Solo con `true` navega a la confirmación, una única vez y como consecuencia del resultado, no de un `BlocListener` que pueda volver a dispararse con cada reconstrucción.
+- El listado no necesita un valor de retorno del `Navigator`: al volver, ya refleja el estado del Cubit compartido.
+- Con `false`, el formulario muestra el error, conserva los datos y permite reintentar. El `SnackBar` de errores del listado solo aparece cuando el listado es la ruta visible, así que el mensaje no se duplica.
+
 ## Inyección de dependencias
 
 Es manual y no usa ningún contenedor externo, porque solo hay una dependencia:
@@ -245,14 +279,17 @@ Para las pruebas basta con pasar otra implementación del contrato a `EmployeeMa
 | `presentation/pages/employee_form_page_test.dart` | Campos, cada validación obligatoria, rangos de los selectores de fecha, envío válido con datos depurados, error con reintento, envíos repetidos y cancelación |
 | `presentation/validators/employee_form_validators_test.dart` | Reglas de texto, selección y coherencia de fechas |
 | `employee_registration_flow_test.dart` | Flujo listado → formulario → éxito → listado con el repositorio real, y registro fallido |
+| `test/app_flow_test.dart` | Aplicación completa (`EmployeeManagementApp`): navegación, cancelación, confirmación única, formularios duplicados, error sin navegación de éxito, cambios que sobreviven a la navegación, sin duplicados, reconstrucción sin recrear el Cubit, reintento de carga y teclado abierto en pantalla pequeña |
 | `test/core/utils/date_formatter_test.dart` | Formato `dd/MM/yyyy` |
 | `test/widget_test.dart` | Arranque, Material 3 y carga de los empleados ficticios |
 
-Salvo las dos últimas filas, las rutas son relativas a `test/features/employees/`. Los pasos para completar el formulario se comparten en `test/helpers/employee_form_helpers.dart`.
+Salvo las tres últimas filas, las rutas son relativas a `test/features/employees/`. Los pasos para completar el formulario se comparten en `test/helpers/employee_form_helpers.dart`.
 
 Las pruebas de la página siguen dos estrategias:
 
 - Un `MockCubit` (`bloc_test`) para fijar cada estado de presentación.
 - El `EmployeeCubit` real con un repositorio simulado (`mocktail`) para verificar que la interfaz reacciona a los estados que emite.
 
-Los defectos intencionales están documentados en [depuracion-fase-3.md](depuracion-fase-3.md), [depuracion-fase-4.md](depuracion-fase-4.md) y [depuracion-fase-5.md](depuracion-fase-5.md).
+`test/app_flow_test.dart` usa un `CountingEmployeeRepository`: delega en la implementación en memoria real y cuenta las cargas y los registros, lo que permite verificar que no hay recargas ni registros de más.
+
+Los defectos intencionales están documentados en [depuracion-fase-3.md](depuracion-fase-3.md), [depuracion-fase-4.md](depuracion-fase-4.md), [depuracion-fase-5.md](depuracion-fase-5.md) y [depuracion-fase-6.md](depuracion-fase-6.md).
