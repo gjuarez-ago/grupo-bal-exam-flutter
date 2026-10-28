@@ -1,4 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:employee_management/features/employees/data/datasources/employee_local_data_source.dart';
+import 'package:employee_management/features/employees/data/datasources/employee_mock_data.dart';
+import 'package:employee_management/features/employees/data/repositories/employee_repository_impl.dart';
 import 'package:employee_management/features/employees/domain/entities/employee.dart';
 import 'package:employee_management/features/employees/domain/repositories/employee_repository.dart';
 import 'package:employee_management/features/employees/presentation/cubit/employee_cubit.dart';
@@ -296,5 +299,63 @@ void main() {
         ),
       ],
     );
+  });
+
+  group('EmployeeCubit con el repositorio en memoria', () {
+    late EmployeeCubit cubit;
+
+    setUp(() async {
+      cubit = EmployeeCubit(EmployeeRepositoryImpl(EmployeeLocalDataSource()));
+      await cubit.loadEmployees();
+    });
+
+    tearDown(() => cubit.close());
+
+    Future<bool> registerSample() => cubit.registerEmployee(
+      fullName: 'Luis Ramírez',
+      area: 'Tecnología',
+      position: 'QA',
+      gender: Gender.male,
+      entryDate: DateTime(2024, 1, 10),
+      birthDate: DateTime(1995, 5, 20),
+    );
+
+    test('el registrado queda activo y se conservan los anteriores', () async {
+      expect(await registerSample(), isTrue);
+
+      final registered = cubit.state.employees;
+      expect(cubit.state.status, EmployeeStatus.success);
+      expect(registered.length, employeeMockData.length + 1);
+      expect(registered.take(employeeMockData.length), employeeMockData);
+      expect(registered.last.fullName, 'Luis Ramírez');
+      expect(registered.last.isActive, isTrue);
+      expect(cubit.state.activeCount, 5);
+      expect(cubit.state.inactiveCount, 1);
+    });
+
+    test(
+      'tras registrar se puede cambiar el estado del nuevo empleado',
+      () async {
+        await registerSample();
+        final newId = cubit.state.employees.last.id;
+
+        expect(
+          await cubit.updateEmployeeStatus(id: newId, isActive: false),
+          isTrue,
+        );
+
+        expect(cubit.state.employees.last.isActive, isFalse);
+        expect(cubit.state.employees.length, employeeMockData.length + 1);
+        expect(cubit.state.inactiveCount, 2);
+      },
+    );
+
+    test('recargar conserva al empleado registrado en memoria', () async {
+      await registerSample();
+
+      await cubit.loadEmployees();
+
+      expect(cubit.state.employees.last.fullName, 'Luis Ramírez');
+    });
   });
 }
