@@ -35,6 +35,28 @@ class Employee extends Equatable {
   /// Indica si el empleado está activo.
   final bool isActive;
 
+  /// Devuelve una copia del empleado con los campos indicados reemplazados.
+  Employee copyWith({
+    String? fullName,
+    String? area,
+    String? position,
+    Gender? gender,
+    DateTime? entryDate,
+    DateTime? birthDate,
+    bool? isActive,
+  }) {
+    return Employee(
+      id: id,
+      fullName: fullName ?? this.fullName,
+      area: area ?? this.area,
+      position: position ?? this.position,
+      gender: gender ?? this.gender,
+      entryDate: entryDate ?? this.entryDate,
+      birthDate: birthDate ?? this.birthDate,
+      isActive: isActive ?? this.isActive,
+    );
+  }
+
   @override
   List<Object?> get props => [
     id,

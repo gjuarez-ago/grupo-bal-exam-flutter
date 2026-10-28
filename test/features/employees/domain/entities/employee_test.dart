@@ -37,5 +37,15 @@ void main() {
     test('empleados con distinto estado activo no son iguales', () {
       expect(buildEmployee(), isNot(buildEmployee(isActive: false)));
     });
+
+    test('copyWith reemplaza solo los campos indicados y conserva el id', () {
+      final employee = buildEmployee();
+
+      final updated = employee.copyWith(isActive: false);
+
+      expect(updated, buildEmployee(isActive: false));
+      expect(updated.id, employee.id);
+      expect(employee.isActive, isTrue);
+    });
   });
 }
