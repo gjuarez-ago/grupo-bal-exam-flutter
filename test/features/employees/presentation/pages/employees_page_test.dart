@@ -314,6 +314,27 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('el interruptor refleja cambios emitidos por el Cubit', (
+      tester,
+    ) async {
+      when(
+        () => repository.updateEmployeeStatus(id: 'emp-3', isActive: true),
+      ).thenAnswer((_) async => employees[2].copyWith(isActive: true));
+
+      await pumpPage(tester, cubit);
+      expect(switchValue(tester, 'emp-3'), isFalse);
+
+      // El cambio no proviene del interruptor sino directamente del Cubit.
+      await cubit.updateEmployeeStatus(id: 'emp-3', isActive: true);
+      await tester.pumpAndSettle();
+
+      expect(cubit.state.employees[2].isActive, isTrue);
+      expect(switchValue(tester, 'emp-3'), isTrue);
+      expect(inCard('emp-3', find.text('Activo')), findsOneWidget);
+      expect(switchValue(tester, 'emp-1'), isTrue);
+      expect(switchValue(tester, 'emp-2'), isTrue);
+    });
+
     testWidgets('un fallo al cambiar el estado no se muestra como éxito', (
       tester,
     ) async {
