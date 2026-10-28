@@ -192,6 +192,9 @@ class _EmployeeFormPageState extends State<EmployeeFormPage> {
               DropdownButtonFormField<String>(
                 key: EmployeeFormPage.areaKey,
                 initialValue: _area,
+                // Ocupa el ancho disponible y recorta opciones largas en
+                // pantallas estrechas en lugar de desbordarse.
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Área'),
                 items: [
                   for (final area in employeeAreas)
@@ -206,6 +209,7 @@ class _EmployeeFormPageState extends State<EmployeeFormPage> {
               DropdownButtonFormField<Gender>(
                 key: EmployeeFormPage.genderKey,
                 initialValue: _gender,
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Género'),
                 items: [
                   for (final gender in Gender.values)
