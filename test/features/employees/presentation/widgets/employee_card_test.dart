@@ -1,0 +1,111 @@
+import 'package:employee_management/features/employees/domain/entities/employee.dart';
+import 'package:employee_management/features/employees/presentation/widgets/employee_card.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  final employee = Employee(
+    id: 'emp-1',
+    fullName: 'Ana Sofía López Ramírez',
+    area: 'Tecnología',
+    position: 'Desarrolladora Flutter',
+    gender: Gender.female,
+    entryDate: DateTime(2021, 2, 5),
+    birthDate: DateTime(1993, 6, 4),
+    isActive: true,
+  );
+
+  Future<void> pumpCard(
+    WidgetTester tester, {
+    required Employee employee,
+    bool enabled = true,
+    ValueChanged<bool>? onStatusChanged,
+  }) {
+    return tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EmployeeCard(
+            employee: employee,
+            statusControlEnabled: enabled,
+            onStatusChanged: onStatusChanged ?? (_) {},
+          ),
+        ),
+      ),
+    );
+  }
+
+  Switch findSwitch(WidgetTester tester) => tester.widget<Switch>(
+    find.descendant(
+      of: find.byKey(EmployeeCard.statusSwitchKey('emp-1')),
+      matching: find.byType(Switch),
+    ),
+  );
+
+  group('EmployeeCard', () {
+    testWidgets('muestra los datos principales del empleado', (tester) async {
+      await pumpCard(tester, employee: employee);
+
+      expect(find.text('Ana Sofía López Ramírez'), findsOneWidget);
+      expect(find.text('Tecnología'), findsOneWidget);
+      expect(find.text('Desarrolladora Flutter'), findsOneWidget);
+      expect(find.text('Femenino'), findsOneWidget);
+      expect(find.text('Ingreso: 05/02/2021'), findsOneWidget);
+    });
+
+    testWidgets('un empleado activo muestra "Activo" y el switch encendido', (
+      tester,
+    ) async {
+      await pumpCard(tester, employee: employee);
+
+      expect(find.text('Activo'), findsOneWidget);
+      expect(find.text('Inactivo'), findsNothing);
+      expect(findSwitch(tester).value, isTrue);
+    });
+
+    testWidgets('un empleado inactivo muestra "Inactivo" y el switch apagado', (
+      tester,
+    ) async {
+      await pumpCard(tester, employee: employee.copyWith(isActive: false));
+
+      expect(find.text('Inactivo'), findsOneWidget);
+      expect(find.text('Activo'), findsNothing);
+      expect(findSwitch(tester).value, isFalse);
+    });
+
+    testWidgets('el género masculino se muestra como "Masculino"', (
+      tester,
+    ) async {
+      await pumpCard(tester, employee: employee.copyWith(gender: Gender.male));
+
+      expect(find.text('Masculino'), findsOneWidget);
+    });
+
+    testWidgets('al pulsar el switch notifica el nuevo valor', (tester) async {
+      bool? received;
+      await pumpCard(
+        tester,
+        employee: employee,
+        onStatusChanged: (value) => received = value,
+      );
+
+      await tester.tap(find.byType(Switch));
+
+      expect(received, isFalse);
+    });
+
+    testWidgets('deshabilitado no responde a pulsaciones', (tester) async {
+      var calls = 0;
+      await pumpCard(
+        tester,
+        employee: employee,
+        enabled: false,
+        onStatusChanged: (_) => calls++,
+      );
+
+      await tester.tap(find.byType(Switch));
+
+      expect(calls, 0);
+      expect(findSwitch(tester).onChanged, isNull);
+    });
+  });
+}
