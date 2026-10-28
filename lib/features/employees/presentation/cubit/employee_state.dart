@@ -22,6 +22,12 @@ class EmployeeState extends Equatable {
   final List<Employee> employees;
   final String? errorMessage;
 
+  /// Totales derivados de [employees]; nunca se almacenan por separado.
+  int get totalCount => employees.length;
+  int get activeCount =>
+      employees.where((employee) => employee.isActive).length;
+  int get inactiveCount => totalCount - activeCount;
+
   EmployeeState copyWith({
     EmployeeStatus? status,
     List<Employee>? employees,
