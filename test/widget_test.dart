@@ -11,12 +11,12 @@ void main() {
     employeeRepository: EmployeeRepositoryImpl(EmployeeLocalDataSource()),
   );
 
-  testWidgets('La aplicación arranca y muestra el título', (
+  testWidgets('La aplicación arranca en la pantalla de empleados', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildApp());
 
-    expect(find.text('Gestión de empleados'), findsOneWidget);
+    expect(find.text('Empleados'), findsOneWidget);
   });
 
   testWidgets('La aplicación usa el tema Material 3', (
@@ -24,19 +24,16 @@ void main() {
   ) async {
     await tester.pumpWidget(buildApp());
 
-    final context = tester.element(find.text('Gestión de empleados'));
+    final context = tester.element(find.text('Empleados'));
     expect(Theme.of(context).useMaterial3, isTrue);
   });
 
-  testWidgets('Carga los empleados ficticios a través del Cubit', (
+  testWidgets('Muestra los empleados ficticios cargados por el Cubit', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Empleados registrados: ${employeeMockData.length}'),
-      findsOneWidget,
-    );
+    expect(find.text(employeeMockData.first.fullName), findsOneWidget);
   });
 }
