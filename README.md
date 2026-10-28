@@ -54,7 +54,47 @@ Pantalla  ──►  Coordinador (EmployeeCubit)  ──►  Datos (empleados en
     └──── se actualiza ──┘
 ```
 
-Las carpetas del código siguen esa misma división: `presentation` (pantallas), `domain` (reglas) y `data` (datos), dentro de `lib/features/employees`.
+## ¿Qué hay en cada carpeta?
+
+Todo el código de la aplicación está en la carpeta `lib`:
+
+```text
+lib/
+├── main.dart                  Punto de arranque de la aplicación
+├── app.dart                   Configuración general: colores, idioma español y el coordinador
+├── core/                      Cosas que usa toda la aplicación
+│   ├── theme/                 Colores y estilo visual
+│   └── utils/                 Herramientas pequeñas, como el formato de fechas
+├── shared/                    Piezas visuales que podrían compartir varias secciones
+└── features/                  Una carpeta por cada sección de la aplicación
+    └── employees/             Todo lo relacionado con empleados
+        ├── domain/            Reglas
+        │   ├── entities/          Qué datos tiene un empleado y la lista de áreas
+        │   └── repositories/      Qué se puede hacer con los empleados (la «lista de servicios»)
+        ├── data/              Datos
+        │   ├── datasources/       Dónde se guardan los empleados (hoy, en memoria) y los 5 de ejemplo
+        │   └── repositories/      Cómo se cumple cada servicio usando ese almacén
+        └── presentation/      Pantallas
+            ├── cubit/             El coordinador y la información que comparte con las pantallas
+            ├── pages/             Las tres pantallas: lista, formulario y confirmación
+            ├── widgets/           Piezas de pantalla: la tarjeta del empleado, el interruptor, los totales
+            └── validators/        Las revisiones del formulario (campos vacíos, fechas incorrectas)
+```
+
+**¿Por qué así?**
+
+- **Cada cosa tiene un solo lugar.** Si hay que cambiar cómo se ve la tarjeta de un empleado, se va a `widgets`; si cambia una regla del formulario, a `validators`. No hay que buscar por todo el proyecto.
+- **Lo que se agrupa es la sección, no el tipo de archivo.** Todo lo de empleados está junto en `features/employees`, en lugar de mezclar en una sola carpeta todas las pantallas de todas las secciones.
+- **Las reglas no dependen de nada más.** La carpeta `domain` no sabe cómo se ven las pantallas ni dónde se guardan los datos; por eso es la parte más estable.
+
+## ¿Cómo puede crecer?
+
+La aplicación está pensada para crecer sin tener que rehacer lo que ya funciona:
+
+- **Agregar una sección nueva** (por ejemplo, vacaciones o departamentos): se crea otra carpeta dentro de `features`, con las mismas tres partes (`domain`, `data` y `presentation`). La sección de empleados no se toca.
+- **Pasar de datos de ejemplo a una base de datos o internet:** solo cambia la carpeta `data`. Se escribe un nuevo «almacén» que cumpla la misma lista de servicios y se conecta en `main.dart`. Las pantallas y las reglas siguen igual, porque nunca supieron de dónde venían los datos.
+- **Reutilizar piezas visuales:** si una pieza, como un botón o un aviso, empieza a usarse en varias secciones, se mueve a `shared` para no repetirla.
+- **Cambiar el aspecto de toda la app:** los colores y estilos están centralizados en `core/theme`; se ajustan en un solo lugar.
 
 ## Herramientas que usa
 
@@ -64,14 +104,5 @@ Las carpetas del código siguen esa misma división: `presentation` (pantallas),
 | **flutter_bloc** (Cubit) | Organizar el coordinador que mantiene la información al día en todas las pantallas. |
 | **equatable** | Comparar fácilmente si dos datos son iguales. |
 | **flutter_localizations** | Mostrar la aplicación y el calendario en español. |
-| **bloc_test** y **mocktail** | Escribir pruebas automáticas (no forman parte de la aplicación final). |
-
-## ¿Cómo sabemos que funciona?
-
-El proyecto incluye **105 pruebas automáticas** que revisan, por ejemplo, que el formulario no deje registrar con datos incompletos, que el empleado nuevo aparezca en la lista y que los totales se calculen bien. Se ejecutan con:
-
-```bash
-flutter test
-```
 
 Para el detalle técnico de la arquitectura, ver [docs/architecture.md](docs/architecture.md).
