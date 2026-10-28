@@ -101,7 +101,7 @@ class _EmployeeFormPageState extends State<EmployeeFormPage> {
         ? DateTime(1900)
         : _nextDay(_birthDate!);
     return _showPicker(
-      helpText: 'Fecha de ingreso',
+      helpText: 'Fecha de entrada',
       initialDate: _entryDate ?? _today,
       firstDate: firstDate,
       lastDate: _today,
@@ -109,7 +109,7 @@ class _EmployeeFormPageState extends State<EmployeeFormPage> {
   }
 
   Future<DateTime?> _pickBirthDate() {
-    // Debe ser anterior a hoy y a la fecha de ingreso, si ya se eligió.
+    // Debe ser anterior a hoy y a la fecha de entrada, si ya se eligió.
     final lastDate = _previousDay(_entryDate ?? _today);
     return _showPicker(
       helpText: 'Fecha de nacimiento',
@@ -228,7 +228,7 @@ class _EmployeeFormPageState extends State<EmployeeFormPage> {
               const SizedBox(height: 16),
               _DateFormField(
                 key: EmployeeFormPage.entryDateKey,
-                label: 'Fecha de ingreso',
+                label: 'Fecha de entrada',
                 value: _entryDate,
                 enabled: enabled,
                 onPick: _pickEntryDate,

@@ -28,7 +28,7 @@ class Employee extends Equatable {
   final String position;
   final Gender gender;
 
-  /// Fecha de ingreso a la empresa.
+  /// Fecha de entrada a la empresa.
   final DateTime entryDate;
   final DateTime birthDate;
 

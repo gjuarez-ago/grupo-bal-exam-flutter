@@ -109,7 +109,7 @@ class EmployeeCard extends StatelessWidget {
                     ),
                     _InfoItem(
                       icon: Icons.event_outlined,
-                      text: 'Ingreso: ${formatDate(employee.entryDate)}',
+                      text: 'Entrada: ${formatDate(employee.entryDate)}',
                     ),
                   ],
                 ),

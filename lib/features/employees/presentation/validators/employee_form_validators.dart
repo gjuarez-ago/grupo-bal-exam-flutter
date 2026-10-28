@@ -16,17 +16,17 @@ abstract final class EmployeeFormValidators {
   static String? gender(Object? value) =>
       value == null ? 'Selecciona un género.' : null;
 
-  /// La fecha de ingreso es obligatoria y no puede ser posterior a hoy.
+  /// La fecha de entrada es obligatoria y no puede ser posterior a hoy.
   static String? entryDate(DateTime? value, {required DateTime today}) {
-    if (value == null) return 'Selecciona la fecha de ingreso.';
+    if (value == null) return 'Selecciona la fecha de entrada.';
     if (_dateOnly(value).isAfter(_dateOnly(today))) {
-      return 'La fecha de ingreso no puede ser futura.';
+      return 'La fecha de entrada no puede ser futura.';
     }
     return null;
   }
 
   /// La fecha de nacimiento es obligatoria, anterior a hoy y anterior a la
-  /// fecha de ingreso, si ya se eligió.
+  /// fecha de entrada, si ya se eligió.
   static String? birthDate(
     DateTime? value, {
     required DateTime today,
@@ -38,7 +38,7 @@ abstract final class EmployeeFormValidators {
       return 'La fecha de nacimiento debe ser anterior a hoy.';
     }
     if (entryDate != null && !birth.isBefore(_dateOnly(entryDate))) {
-      return 'La fecha de nacimiento debe ser anterior a la fecha de ingreso.';
+      return 'La fecha de nacimiento debe ser anterior a la fecha de entrada.';
     }
     return null;
   }

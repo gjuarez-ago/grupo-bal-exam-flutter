@@ -156,9 +156,9 @@ void main() {
         findsOneWidget,
       );
       expect(inCard('emp-1', find.text('Femenino')), findsOneWidget);
-      expect(inCard('emp-1', find.text('Ingreso: 15/02/2021')), findsOneWidget);
+      expect(inCard('emp-1', find.text('Entrada: 15/02/2021')), findsOneWidget);
       expect(inCard('emp-2', find.text('Masculino')), findsOneWidget);
-      expect(inCard('emp-2', find.text('Ingreso: 03/09/2018')), findsOneWidget);
+      expect(inCard('emp-2', find.text('Entrada: 03/09/2018')), findsOneWidget);
     });
 
     testWidgets('el estado se muestra con texto y en el interruptor', (

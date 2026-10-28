@@ -27,7 +27,7 @@ Future<void> pickFormDay(WidgetTester tester, Key field, String day) async {
 }
 
 /// Completa el formulario con datos válidos. Con la fecha de referencia
-/// 27/10/2026, el ingreso queda en 15/10/2026 y el nacimiento en 10/10/1996.
+/// 27/10/2026, la entrada queda en 15/10/2026 y el nacimiento en 10/10/1996.
 Future<void> fillValidEmployeeForm(
   WidgetTester tester, {
   String fullName = '  Luis Ramírez  ',

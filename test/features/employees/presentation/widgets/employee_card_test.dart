@@ -57,7 +57,7 @@ void main() {
       expect(find.text('Tecnología'), findsOneWidget);
       expect(find.text('Desarrolladora Flutter'), findsOneWidget);
       expect(find.text('Femenino'), findsOneWidget);
-      expect(find.text('Ingreso: 05/02/2021'), findsOneWidget);
+      expect(find.text('Entrada: 05/02/2021'), findsOneWidget);
     });
 
     testWidgets('un empleado activo muestra "Activo" y el switch encendido', (

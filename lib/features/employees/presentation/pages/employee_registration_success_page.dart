@@ -9,7 +9,7 @@ class EmployeeRegistrationSuccessPage extends StatelessWidget {
 
   final String employeeName;
 
-  static const title = 'Empleado registrado';
+  static const title = 'Empleado registrado correctamente';
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +38,7 @@ class EmployeeRegistrationSuccessPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '$employeeName se registró correctamente y ya aparece en '
-                  'el listado.',
+                  '$employeeName ya aparece en la lista de empleados.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -48,7 +47,7 @@ class EmployeeRegistrationSuccessPage extends StatelessWidget {
                 const SizedBox(height: 32),
                 FilledButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Volver al listado'),
+                  child: const Text('Regresar a empleados'),
                 ),
               ],
             ),

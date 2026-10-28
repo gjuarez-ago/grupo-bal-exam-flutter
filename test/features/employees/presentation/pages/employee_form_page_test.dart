@@ -106,7 +106,7 @@ void main() {
         'Puesto',
         'Área',
         'Género',
-        'Fecha de ingreso',
+        'Fecha de entrada',
         'Fecha de nacimiento',
         'Cancelar',
       ]) {
@@ -171,7 +171,7 @@ void main() {
         'Ingresa el puesto.',
         'Selecciona un área.',
         'Selecciona un género.',
-        'Selecciona la fecha de ingreso.',
+        'Selecciona la fecha de entrada.',
         'Selecciona la fecha de nacimiento.',
       ]) {
         expect(find.text(message), findsOneWidget, reason: message);
@@ -264,7 +264,7 @@ void main() {
       }
     });
 
-    testWidgets('el nacimiento no puede elegirse en o después del ingreso', (
+    testWidgets('el nacimiento no puede elegirse en o después de la entrada', (
       tester,
     ) async {
       await openForm(tester);
@@ -298,9 +298,9 @@ void main() {
         ),
       ).called(1);
       expect(find.text(EmployeeRegistrationSuccessPage.title), findsOneWidget);
-      expect(find.textContaining('Luis Ramírez se registró'), findsOneWidget);
+      expect(find.textContaining('Luis Ramírez ya aparece'), findsOneWidget);
 
-      await tester.tap(find.text('Volver al listado'));
+      await tester.tap(find.text('Regresar a empleados'));
       await tester.pumpAndSettle();
       expect(find.text('Inicio'), findsOneWidget);
     });

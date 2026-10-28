@@ -104,7 +104,7 @@ Future<void> registerValidEmployee(WidgetTester tester) async {
 }
 
 Future<void> backToList(WidgetTester tester) async {
-  await tester.tap(find.text('Volver al listado'));
+  await tester.tap(find.text('Regresar a empleados'));
   await tester.pumpAndSettle();
 }
 
@@ -245,7 +245,7 @@ void main() {
           'QA',
           'Tecnología',
           'Masculino',
-          'Ingreso: 15/10/2026',
+          'Entrada: 15/10/2026',
           'Activo',
         ]) {
           expect(inCard(registered.id, find.text(text)), findsOneWidget);

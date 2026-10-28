@@ -55,11 +55,11 @@ void main() {
     });
   });
 
-  group('EmployeeFormValidators — fecha de ingreso', () {
+  group('EmployeeFormValidators — fecha de entrada', () {
     test('es obligatoria', () {
       expect(
         EmployeeFormValidators.entryDate(null, today: today),
-        'Selecciona la fecha de ingreso.',
+        'Selecciona la fecha de entrada.',
       );
     });
 
@@ -74,7 +74,7 @@ void main() {
     test('una fecha futura es rechazada', () {
       expect(
         EmployeeFormValidators.entryDate(DateTime(2026, 10, 28), today: today),
-        'La fecha de ingreso no puede ser futura.',
+        'La fecha de entrada no puede ser futura.',
       );
     });
   });
@@ -99,9 +99,9 @@ void main() {
       );
     });
 
-    test('debe ser anterior a la fecha de ingreso', () {
+    test('debe ser anterior a la fecha de entrada', () {
       const message =
-          'La fecha de nacimiento debe ser anterior a la fecha de ingreso.';
+          'La fecha de nacimiento debe ser anterior a la fecha de entrada.';
       expect(
         EmployeeFormValidators.birthDate(
           DateTime(2021, 5, 1),

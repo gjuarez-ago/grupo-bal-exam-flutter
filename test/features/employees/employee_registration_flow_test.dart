@@ -77,9 +77,9 @@ void main() {
 
       await fillValidEmployeeForm(tester);
       await submitEmployeeForm(tester);
-      expect(find.text('Empleado registrado'), findsOneWidget);
+      expect(find.text('Empleado registrado correctamente'), findsOneWidget);
 
-      await tester.tap(find.text('Volver al listado'));
+      await tester.tap(find.text('Regresar a empleados'));
       await tester.pumpAndSettle();
 
       expect(find.byType(EmployeesPage), findsOneWidget);
@@ -94,7 +94,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(ValueKey(registered.id)),
-          matching: find.text('Ingreso: 15/10/2026'),
+          matching: find.text('Entrada: 15/10/2026'),
         ),
         findsOneWidget,
       );
@@ -140,7 +140,7 @@ void main() {
 
       // El error se informa una sola vez, en el formulario.
       expect(find.text('No se pudo registrar al empleado.'), findsOneWidget);
-      expect(find.text('Empleado registrado'), findsNothing);
+      expect(find.text('Empleado registrado correctamente'), findsNothing);
       expect(cubit.state.employees, employeeMockData);
 
       await tester.tap(find.text('Cancelar'));
