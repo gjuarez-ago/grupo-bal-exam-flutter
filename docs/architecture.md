@@ -1,42 +1,45 @@
 # Arquitectura
 
-> **Estado:** Fase 2 (arquitectura base). Ya existen la entidad `Employee`, el contrato `EmployeeRepository`, los estados y `EmployeeCubit` (solo carga de empleados) y el tema Material 3. Todavía **no** existen la implementación de datos, la fuente mock ni las pantallas de empleados.
+> **Estado:** Fase 3 (capa de datos). El flujo completo de empleados (consultar, registrar y cambiar el estado) funciona con datos ficticios en memoria a través del repositorio y del Cubit. Todavía **no** existen el listado definitivo ni el formulario de registro: la pantalla actual es provisional y solo muestra cuántos empleados se cargaron.
 
 ## Enfoque
 
 El proyecto sigue Clean Architecture organizada por funcionalidades (*features*). Cada módulo agrupa sus propias capas, de modo que el código de una funcionalidad vive junto y no se dispersa en carpetas globales.
 
-## Flujo conceptual
+## Flujo
 
 ```text
-Presentación
+Presentación (pantalla provisional)
     |
     v
 EmployeeCubit
     |
     v
-Contrato EmployeeRepository
+EmployeeRepository (contrato de dominio)
     ^
     |
-Implementación de datos (fase posterior)
+EmployeeRepositoryImpl
     |
     v
-Fuente mock local (fase posterior)
+EmployeeLocalDataSource
+    |
+    v
+Datos ficticios en memoria (employeeMockData)
 ```
-
-El diagrama representa la relación arquitectónica prevista. Las dos últimas cajas aún no están implementadas.
 
 ## Dependencias permitidas entre capas
 
 | Capa | Puede depender de | No puede depender de |
 |---|---|---|
 | `domain` | Dart puro y `equatable` | Flutter, `flutter_bloc`, `data`, `presentation` |
-| `data` | `domain` | `presentation` |
+| `data` | `domain` | `presentation`, Flutter |
 | `presentation` | `domain`, Flutter, `flutter_bloc` | Implementaciones de `data` |
 
-El dominio no depende de Flutter ni de la implementación de datos porque contiene las reglas de negocio: así puede probarse sin interfaz y la fuente de datos (mock, red o almacenamiento local) puede sustituirse sin modificar el dominio ni la presentación. La implementación concreta se inyectará desde la raíz de la aplicación en la Fase 3.
+Solo el punto de composición (`main.dart`) conoce las implementaciones concretas.
 
-## Componentes
+El dominio no depende de Flutter ni de la implementación de datos porque contiene las reglas de negocio. Así puede probarse sin interfaz, y la fuente de datos (mock, red o almacenamiento local) puede sustituirse sin modificar el dominio ni la presentación.
+
+## Dominio
 
 ### Entidad `Employee`
 
@@ -55,59 +58,102 @@ Representa a un empleado ya registrado. Todos sus campos son obligatorios:
 | `birthDate` | `DateTime` | Fecha de nacimiento |
 | `isActive` | `bool` | Estado activo |
 
-Usa `equatable` para comparar por valor. Esto facilita las pruebas y la comparación de estados. No tiene anotaciones de serialización ni lógica de presentación.
+- Usa `equatable` para comparar por valor.
+- `copyWith` crea copias modificadas sin mutar la instancia original y conserva siempre el `id`.
 
 ### Contrato `EmployeeRepository`
 
 `lib/features/employees/domain/repositories/employee_repository.dart`
 
-Clase abstracta con las operaciones del módulo. Todas devuelven `Future` para admitir más adelante fuentes asíncronas sin cambiar el contrato.
-
 - `getEmployees()`: devuelve todos los empleados. Una lista vacía es un resultado válido.
-- `registerEmployee(...)`: recibe los datos del empleado **sin** `id` ni `isActive`. La implementación asigna el `id` y registra al empleado como activo, y devuelve el `Employee` resultante.
-- `updateEmployeeStatus(id:, isActive:)`: cambia el estado activo y devuelve el empleado actualizado.
+- `registerEmployee(...)`: recibe los datos sin `id` ni `isActive`. La implementación asigna el `id`, registra al empleado como activo y lo devuelve.
+- `updateEmployeeStatus(id:, isActive:)`: devuelve el empleado actualizado.
 
-**Manejo de errores:** las implementaciones lanzan `EmployeeRepositoryException` (con un `message` comprensible) ante fallos esperados, y `EmployeeNotFoundException` cuando el `id` no existe.
+**Errores:** las implementaciones lanzan `EmployeeRepositoryException` ante fallos esperados, y `EmployeeNotFoundException` cuando el `id` no existe.
 
-### Estados `EmployeeState`
+## Datos
+
+### `EmployeeLocalDataSource`
+
+`lib/features/employees/data/datasources/employee_local_data_source.dart`
+
+Guarda los empleados en una lista privada en memoria. Por defecto arranca con los cinco empleados de `employeeMockData`; también acepta una lista inicial distinta (por ejemplo, vacía para las pruebas).
+
+- **Sin colecciones mutables expuestas:** `getEmployees()` devuelve una copia no modificable.
+- **Identificadores únicos:** se generan como `emp-N` con un contador interno, saltando cualquier id que ya exista.
+- **Actualización:** localiza al empleado por `id` y reemplaza solo esa posición con `copyWith`. Si el id no existe lanza `EmployeeNotFoundException` y no modifica nada.
+
+### `EmployeeRepositoryImpl`
+
+`lib/features/employees/data/repositories/employee_repository_impl.dart`
+
+Implementa el contrato y delega cada operación en la fuente local. Sus métodos son `async`, de modo que las excepciones de la fuente llegan al llamador como un `Future` fallido, igual que ocurriría con una fuente remota.
+
+No se creó un modelo de datos separado (`EmployeeModel`) porque la fuente en memoria no serializa. Se incorporará si se agrega una API o almacenamiento persistente.
+
+### Limitaciones del almacenamiento en memoria
+
+- Los datos se pierden al reiniciar la aplicación. Cada arranque vuelve a los cinco empleados ficticios.
+- Los datos no se comparten entre dispositivos ni entre instancias de la aplicación.
+- Las operaciones no tienen latencia real, así que el estado `loading` es prácticamente instantáneo.
+
+## Presentación
+
+### `EmployeeState`
 
 `lib/features/employees/presentation/cubit/employee_state.dart`
 
-Es una única clase inmutable, con `equatable`, que tiene:
+Es una única clase inmutable con:
 
-- `status`: `EmployeeStatus.initial`, `loading`, `success` o `failure`.
-- `employees`: lista no modificable de empleados (vacía por defecto).
+- `status`: `initial`, `loading`, `success` o `failure`.
+- `employees`: lista no modificable.
 - `errorMessage`: solo tiene valor cuando `status` es `failure`.
-
-Se eligió una sola clase en lugar de una por estado para conservar la lista durante una recarga sin duplicar campos.
 
 ### `EmployeeCubit`
 
 `lib/features/employees/presentation/cubit/employee_cubit.dart`
 
-Recibe `EmployeeRepository` por constructor; no crea ni conoce la implementación concreta. Por ahora solo implementa `loadEmployees()`:
+Recibe `EmployeeRepository` por constructor. Todas las operaciones emiten `loading` y después `success` o `failure`:
 
-1. Emite `loading`, conservando los empleados actuales.
-2. Si la carga tiene éxito, emite `success` con la lista.
-3. Si se produce una `EmployeeRepositoryException`, emite `failure` con su mensaje.
-4. Si se produce cualquier otro error, lo reporta con `addError` (llega al `BlocObserver`) y emite `failure` con un mensaje genérico.
+| Método | En éxito | Devuelve |
+|---|---|---|
+| `loadEmployees()` | Reemplaza la lista con la del repositorio | — |
+| `registerEmployee(...)` | Agrega el empleado nuevo al final de la lista actual | `true` / `false` |
+| `updateEmployeeStatus(id:, isActive:)` | Reemplaza solo el empleado afectado | `true` / `false` |
 
-### Tema
+En caso de fallo:
 
-`lib/core/theme/app_theme.dart` define un tema claro basado en Material 3, generado a partir de un color semilla índigo.
+- Se conserva la lista vigente, de modo que el Cubit puede seguir usándose.
+- Una `EmployeeRepositoryException` muestra su mensaje.
+- Cualquier otro error se reporta con `addError` y se muestra un mensaje genérico.
+- Un fallo nunca se presenta como éxito.
+
+## Inyección de dependencias
+
+Es manual y no usa ningún contenedor externo, porque solo hay una dependencia:
+
+1. `main.dart` crea `EmployeeLocalDataSource` y `EmployeeRepositoryImpl`.
+2. Pasa el repositorio a `EmployeeManagementApp`, que solo conoce el contrato `EmployeeRepository`.
+3. `app.dart` lo expone con `RepositoryProvider` y crea `EmployeeCubit` con `BlocProvider`, que llama a `loadEmployees()` al crearlo.
+
+Para las pruebas basta con pasar otra implementación del contrato a `EmployeeManagementApp`.
 
 ## Pruebas
 
-Las pruebas están en `test/` y reflejan la estructura de `lib/`:
+| Archivo | Qué cubre |
+|---|---|
+| `domain/entities/employee_test.dart` | Construcción, igualdad y `copyWith` |
+| `data/datasources/employee_local_data_source_test.dart` | Datos ficticios, lista vacía, inmutabilidad, ids únicos, registro, actualización aislada, id inexistente |
+| `data/repositories/employee_repository_impl_test.dart` | Delegación de las tres operaciones y propagación de errores |
+| `presentation/cubit/employee_cubit_test.dart` | Secuencias de estados de carga, registro y actualización, en éxito y en fallo, y recuperación tras un fallo |
+| `widget_test.dart` | Arranque, Material 3 y carga de los empleados a través del Cubit |
 
-- `features/employees/domain/entities/employee_test.dart`: construcción e igualdad de la entidad.
-- `features/employees/presentation/cubit/employee_cubit_test.dart`: transiciones del Cubit con un repositorio simulado mediante `mocktail` y `bloc_test` (éxito, lista vacía, error esperado, error inesperado y recarga).
-- `widget_test.dart`: arranque de la aplicación y uso de Material 3.
+Las rutas de la tabla son relativas a `test/features/employees/`, salvo `widget_test.dart`, que está en `test/`.
 
-## Pendiente para la Fase 3
+Los defectos intencionales de esta fase están documentados en [depuracion-fase-3.md](depuracion-fase-3.md).
 
-- Fuente de datos mock local (`data/datasources`).
-- Implementación concreta de `EmployeeRepository` (`data/repositories`).
-- Operaciones de registro y cambio de estado en `EmployeeCubit`.
-- Inyección del repositorio y del Cubit en la raíz de la aplicación.
-- Pantallas y widgets de empleados.
+## Pendiente para la Fase 4
+
+- Listado definitivo de empleados.
+- Formulario de registro, con selección de fechas.
+- Acción para activar o desactivar desde la interfaz.

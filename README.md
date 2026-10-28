@@ -8,14 +8,15 @@ Construir una aplicación de gestión de empleados organizada con Clean Architec
 
 ## Estado actual
 
-**Fase 2: arquitectura base.**
+**Fase 3: capa de datos.**
 
-- Entidad de dominio `Employee` y contrato abstracto `EmployeeRepository`.
-- `EmployeeState` y `EmployeeCubit`, que por ahora solo carga empleados a través del contrato.
-- Tema claro con Material 3.
-- Pruebas automatizadas de la entidad, el Cubit y el arranque de la app.
+- Fuente de datos local en memoria con cinco empleados ficticios (`EmployeeLocalDataSource`).
+- Repositorio concreto `EmployeeRepositoryImpl`, que implementa el contrato del dominio.
+- `EmployeeCubit` carga, registra y cambia el estado activo de los empleados.
+- Inyección manual de dependencias en `main.dart` y `app.dart`.
+- Práctica de depuración con tres errores intencionales, documentada en [docs/depuracion-fase-3.md](docs/depuracion-fase-3.md).
 
-Todavía **no** existen la fuente de datos mock, la implementación del repositorio ni las pantallas de empleados. Al ejecutar la app solo se ve una pantalla provisional con el título.
+Los datos se guardan en memoria y **se pierden al reiniciar la aplicación**. Todavía no existen el listado definitivo ni el formulario de registro: al ejecutar la app se ve una pantalla provisional que indica cuántos empleados se cargaron.
 
 ## Dependencias
 
@@ -45,8 +46,10 @@ flutter doctor
 # Instalar dependencias
 flutter pub get
 
-# Ejecutar la aplicación
+# Ejecutar la aplicación (elige un dispositivo con `flutter devices`)
 flutter run
+# Por ejemplo, en el navegador:
+flutter run -d chrome
 ```
 
 ## Verificación
@@ -57,13 +60,21 @@ flutter analyze
 flutter test
 ```
 
-Pruebas disponibles:
+Para ejecutar un solo archivo de pruebas:
+
+```bash
+flutter test test/features/employees/presentation/cubit/employee_cubit_test.dart
+```
+
+Pruebas disponibles (31 en total):
 
 - `test/features/employees/domain/entities/employee_test.dart`: entidad `Employee`.
+- `test/features/employees/data/datasources/employee_local_data_source_test.dart`: fuente de datos en memoria.
+- `test/features/employees/data/repositories/employee_repository_impl_test.dart`: repositorio concreto.
 - `test/features/employees/presentation/cubit/employee_cubit_test.dart`: estados de `EmployeeCubit`.
-- `test/widget_test.dart`: arranque de la aplicación y tema Material 3.
+- `test/widget_test.dart`: arranque, tema Material 3 y carga de empleados.
 
-## Estructura prevista
+## Estructura
 
 ```text
 lib/
@@ -80,4 +91,4 @@ lib/
 
 Las carpetas vacías contienen un archivo `.gitkeep` para que Git las conserve; se eliminará cuando la carpeta tenga contenido real.
 
-Consulta [docs/architecture.md](docs/architecture.md) para más detalle sobre la arquitectura prevista.
+Consulta [docs/architecture.md](docs/architecture.md) para más detalle sobre la arquitectura.
