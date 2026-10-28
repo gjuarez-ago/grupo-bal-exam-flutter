@@ -1,0 +1,55 @@
+import '../../domain/entities/employee.dart';
+
+/// Empleados ficticios con los que arranca la fuente de datos local.
+final List<Employee> employeeMockData = List.unmodifiable([
+  Employee(
+    id: 'emp-1',
+    fullName: 'Ana Sofía López Ramírez',
+    area: 'Tecnología',
+    position: 'Desarrolladora Flutter',
+    gender: Gender.female,
+    entryDate: DateTime(2021, 2, 15),
+    birthDate: DateTime(1993, 6, 4),
+    isActive: true,
+  ),
+  Employee(
+    id: 'emp-2',
+    fullName: 'Carlos Alberto Pérez Núñez',
+    area: 'Finanzas',
+    position: 'Analista financiero',
+    gender: Gender.male,
+    entryDate: DateTime(2018, 9, 3),
+    birthDate: DateTime(1987, 11, 23),
+    isActive: true,
+  ),
+  Employee(
+    id: 'emp-3',
+    fullName: 'María Fernanda Torres Gil',
+    area: 'Recursos Humanos',
+    position: 'Coordinadora de talento',
+    gender: Gender.female,
+    entryDate: DateTime(2016, 1, 11),
+    birthDate: DateTime(1985, 3, 30),
+    isActive: false,
+  ),
+  Employee(
+    id: 'emp-4',
+    fullName: 'Jorge Luis Hernández Castro',
+    area: 'Operaciones',
+    position: 'Supervisor de almacén',
+    gender: Gender.male,
+    entryDate: DateTime(2022, 7, 1),
+    birthDate: DateTime(1990, 8, 17),
+    isActive: true,
+  ),
+  Employee(
+    id: 'emp-5',
+    fullName: 'Valeria Méndez Ortega',
+    area: 'Ventas',
+    position: 'Ejecutiva comercial',
+    gender: Gender.female,
+    entryDate: DateTime(2023, 4, 24),
+    birthDate: DateTime(1998, 12, 9),
+    isActive: true,
+  ),
+]);
