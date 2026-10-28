@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../domain/entities/employee.dart';
 import 'employee_status_control.dart';
+import 'gender_label.dart';
 
 /// Tarjeta con los datos principales de un empleado y su control de estado.
 class EmployeeCard extends StatelessWidget {
@@ -77,7 +78,7 @@ class EmployeeCard extends StatelessWidget {
                   ),
                   _InfoItem(
                     icon: Icons.person_outline,
-                    text: _genderLabel(employee.gender),
+                    text: genderLabel(employee.gender),
                   ),
                   _InfoItem(
                     icon: Icons.event_outlined,
@@ -91,11 +92,6 @@ class EmployeeCard extends StatelessWidget {
       ),
     );
   }
-
-  static String _genderLabel(Gender gender) => switch (gender) {
-    Gender.male => 'Masculino',
-    Gender.female => 'Femenino',
-  };
 }
 
 /// Estado del empleado mostrado con icono y texto, no solo con color.
