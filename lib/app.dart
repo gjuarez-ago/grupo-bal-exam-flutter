@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/theme/app_theme.dart';
 import 'features/employees/domain/repositories/employee_repository.dart';
@@ -15,6 +16,15 @@ class EmployeeManagementApp extends StatelessWidget {
 
   final EmployeeRepository employeeRepository;
 
+  /// Idioma de la interfaz: los componentes de Material (por ejemplo, el
+  /// selector de fechas) se muestran en español.
+  static const locale = Locale('es', 'MX');
+  static const localizationsDelegates = [
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ];
+
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider.value(
@@ -26,6 +36,9 @@ class EmployeeManagementApp extends StatelessWidget {
           title: 'Gestión de empleados',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
+          locale: locale,
+          supportedLocales: const [locale],
+          localizationsDelegates: localizationsDelegates,
           home: const EmployeesPage(),
         ),
       ),
