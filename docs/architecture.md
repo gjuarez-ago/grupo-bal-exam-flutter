@@ -53,8 +53,8 @@ Representa a un empleado ya registrado. Todos sus campos son obligatorios:
 | `fullName` | `String` | Nombre completo |
 | `area` | `String` | Área de trabajo |
 | `position` | `String` | Puesto |
-| `gender` | `Gender` | Enumeración `male` / `female` |
-| `entryDate` | `DateTime` | Fecha de ingreso |
+| `gender` | `Gender` | Enumeración `male` / `female` / `other` (Masculino, Femenino, Otro) |
+| `entryDate` | `DateTime` | Fecha de entrada |
 | `birthDate` | `DateTime` | Fecha de nacimiento |
 | `isActive` | `bool` | Estado activo |
 
@@ -152,8 +152,9 @@ Comportamiento con datos en pantalla:
 Widgets de apoyo, en `presentation/widgets/`:
 
 - `EmployeeCard`:
-  - muestra nombre (elemento principal), puesto, área, género y fecha de ingreso (`dd/MM/yyyy`);
+  - muestra nombre (elemento principal), puesto, área, género y fecha de entrada (`dd/MM/yyyy`);
   - muestra el estado con icono **y** texto («Activo» / «Inactivo»), no solo con color;
+  - un empleado inactivo se ve atenuado: fondo `surfaceContainerHighest` y contenido al 55 % de opacidad (`AnimatedOpacity`). El interruptor conserva la opacidad completa;
   - incluye el interruptor.
 - `EmployeeStatusControl`: un `Switch` sin estado propio; su valor siempre proviene de `employee.isActive`.
 - `EmployeeListSummary`: muestra los totales que recibe del estado.
@@ -188,18 +189,18 @@ EmployeeRepositoryImpl → EmployeeLocalDataSource.addEmployee
 |---|---|---|
 | Nombre completo | `TextFormField` | Obligatorio; se recortan espacios; sin restricciones de caracteres |
 | Puesto | `TextFormField` | Obligatorio; se recortan espacios |
-| Área | `DropdownButtonFormField` (`isExpanded`) | Obligatoria; opciones de `employeeAreas` (dominio), coherentes con los datos ficticios |
-| Género | `DropdownButtonFormField` | Obligatorio; valores de `Gender` |
-| Fecha de ingreso | `showDatePicker` | Obligatoria; no puede ser futura |
-| Fecha de nacimiento | `showDatePicker` | Obligatoria; anterior a hoy y a la fecha de ingreso; sin edad mínima |
+| Área | `DropdownButtonFormField` (`isExpanded`) | Obligatoria; opciones de `employeeAreas` (dominio): Administración, Finanzas, Operaciones, Recursos Humanos, Tecnología, Ventas |
+| Género | `DropdownButtonFormField` | Obligatorio; valores de `Gender`: Masculino, Femenino, Otro |
+| Fecha de entrada | `showDatePicker` (`calendarOnly`) | Obligatoria; no puede ser futura; no se puede escribir a mano |
+| Fecha de nacimiento | `showDatePicker` (`calendarOnly`) | Obligatoria; anterior a hoy y a la fecha de entrada; sin edad mínima |
 
 **Validaciones:**
 
 - Las reglas están en `presentation/validators/employee_form_validators.dart` como funciones puras, fuera de los widgets.
 - Reciben la fecha de referencia como parámetro, de modo que las pruebas no dependen de la fecha real.
 - Los selectores de fecha limitan además el rango elegible:
-  - ingreso: hasta hoy, y después del nacimiento si ya se eligió;
-  - nacimiento: hasta el día anterior al ingreso, o hasta ayer si aún no hay ingreso.
+  - entrada: hasta hoy, y después del nacimiento si ya se eligió;
+  - nacimiento: hasta el día anterior a la entrada, o hasta ayer si aún no hay entrada.
 - La capa de datos no repite estas validaciones de interfaz.
 
 **Estado de la pantalla:**
@@ -210,7 +211,7 @@ EmployeeRepositoryImpl → EmployeeLocalDataSource.addEmployee
 
 **Resultado:**
 
-- **Éxito** (`registerEmployee` devuelve `true`): se reemplaza la ruta por `EmployeeRegistrationSuccessPage`. Su botón «Volver al listado» regresa a `EmployeesPage`, que ya muestra al nuevo empleado.
+- **Éxito** (`registerEmployee` devuelve `true`): se reemplaza la ruta por `EmployeeRegistrationSuccessPage`. Su botón «Regresar a empleados» regresa a `EmployeesPage`, que ya muestra al nuevo empleado.
 - **Fallo** (`false`): se muestra el mensaje del estado (`errorMessage`), se conservan los datos capturados y se puede reintentar. Nunca se muestra la pantalla de éxito.
 - **Cancelar**: regresa al listado sin llamar al Cubit.
 - Después del `await` se comprueba `mounted` antes de usar el `BuildContext`.
@@ -229,7 +230,7 @@ La navegación usa `Navigator` con `MaterialPageRoute`, sin paquetes adicionales
 
 ```text
 EmployeesPage ──push──► EmployeeFormPage ──pushReplacement──► EmployeeRegistrationSuccessPage
-      ▲                       │ Cancelar (pop)                          │ Volver al listado (pop)
+      ▲                       │ Cancelar (pop)                          │ Regresar a empleados (pop)
       └───────────────────────┴─────────────────────────────────────────┘
 ```
 

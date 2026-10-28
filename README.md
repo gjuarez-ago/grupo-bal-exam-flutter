@@ -12,7 +12,8 @@ Construir una aplicación de gestión de empleados organizada con Clean Architec
 
 Funcionalidades disponibles:
 
-- **Listado de empleados:** muestra nombre, puesto, área, género, fecha de ingreso (`dd/MM/yyyy`) y estado. El estado se indica con texto e icono, no solo con color.
+- **Listado de empleados:** muestra nombre, puesto, área, género, fecha de entrada (`dd/MM/yyyy`) y estado. El estado se indica con texto e icono, no solo con color.
+- **Empleados inactivos atenuados:** al desactivar a un empleado, su fila cambia de aspecto (fondo más oscuro y contenido con menor opacidad) y la etiqueta pasa a «Inactivo».
 - **Totales:** número total de empleados, activos e inactivos, calculados a partir de la lista actual.
 - **Activar o desactivar** a un empleado con un interruptor. Si la operación falla, se muestra un mensaje y se conserva el estado real.
 - **Registro de empleados** desde el botón **Nuevo empleado** (ver más abajo).
@@ -25,13 +26,14 @@ Funcionalidades disponibles:
 1. En la pantalla **Empleados**, pulsa **Nuevo empleado**. Pulsarlo varias veces seguidas abre un solo formulario.
 2. Completa el formulario **Registrar empleado**:
    - **Nombre completo** y **Puesto**: obligatorios. Se ignoran los espacios al inicio y al final.
-   - **Área** y **Género**: se eligen de una lista.
-   - **Fecha de ingreso**: no puede ser futura.
-   - **Fecha de nacimiento**: debe ser anterior a hoy y a la fecha de ingreso.
+   - **Área**: se elige de una lista (Administración, Finanzas, Operaciones, Recursos Humanos, Tecnología, Ventas).
+   - **Género**: se elige de una lista (Masculino, Femenino, Otro).
+   - **Fecha de entrada**: se elige en un calendario (no se puede escribir a mano) y no puede ser futura.
+   - **Fecha de nacimiento**: se elige en un calendario y debe ser anterior a hoy y a la fecha de entrada.
 3. Pulsa **Registrar empleado**.
    - Si falta algún dato, el formulario muestra el error junto al campo y no registra nada.
    - Mientras se registra, el botón muestra «Registrando…» y no acepta pulsaciones repetidas.
-4. Si el registro termina bien, aparece la pantalla **Empleado registrado**. Con **Volver al listado** regresas a la lista, donde ya aparece el nuevo empleado (activo) y los totales están actualizados.
+4. Si el registro termina bien, aparece la pantalla **Empleado registrado correctamente**. Con **Regresar a empleados** vuelves a la lista, donde ya aparece el nuevo empleado (activo) y los totales están actualizados.
 5. Si el registro falla, se muestra el mensaje de error, los datos capturados se conservan y puedes reintentar.
 6. **Cancelar** vuelve al listado sin registrar a nadie.
 
@@ -122,7 +124,7 @@ Para ejecutar un solo archivo de pruebas:
 flutter test test/features/employees/presentation/pages/employee_form_page_test.dart
 ```
 
-Pruebas disponibles (99 en total):
+Pruebas disponibles (105 en total):
 
 - `test/core/utils/date_formatter_test.dart`: formato de fechas.
 - `test/features/employees/domain/entities/employee_test.dart`: entidad `Employee`.
